@@ -1,9 +1,10 @@
 {
-  "/(authenticated)/notifications/page": "app/(authenticated)/notifications/page.js",
-  "/(auth)/auth/page": "app/(auth)/auth/page.js",
+  "/(public)/page": "app/(public)/page.js",
   "/admin/page": "app/admin/page.js",
-  "/(authenticated)/marketplace/page": "app/(authenticated)/marketplace/page.js",
-  "/(authenticated)/dashboard/page": "app/(authenticated)/dashboard/page.js",
-  "/(authenticated)/marketplace/bookings/[id]/page": "app/(authenticated)/marketplace/bookings/[id]/page.js",
-  "/(authenticated)/marketplace/my-bookings/page": "app/(authenticated)/marketplace/my-bookings/page.js"
+  "/(auth)/auth/page": "app/(auth)/auth/page.js",
+  "/(authenticated)/marketplace/providers/page": "app/(authenticated)/marketplace/providers/page.js",
+  "/(authenticated)/marketplace/services/[id]/page": "app/(authenticated)/marketplace/services/[id]/page.js",
+  "/(authenticated)/marketplace/provider/[id]/page": "app/(authenticated)/marketplace/provider/[id]/page.js",
+  "/(authenticated)/marketplace/services/[id]/book/page": "app/(authenticated)/marketplace/services/[id]/book/page.js",
+  "/(authenticated)/marketplace/page": "app/(authenticated)/marketplace/page.js"
 }

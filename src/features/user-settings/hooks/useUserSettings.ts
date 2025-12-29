@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import type { UserSettings } from "@/types/user-settings";
 import { defaultUserSettings } from "@/types/user-settings";
@@ -20,6 +20,17 @@ export function useUserSettings() {
       setLoading(true);
       setError(null);
 
+      // Check if user is authenticated before making the request
+      const apiToken = getApiToken();
+      if (!apiToken) {
+        // Not authenticated - silently use defaults
+        if (mountedRef.current) {
+          setSettings(defaultUserSettings);
+          setLoading(false);
+        }
+        return;
+      }
+
       const url = `${API_BASE_URL}${API_ENDPOINTS.settingsUser}`;
       const response = await fetch(url, createAuthFetchOptions());
 
@@ -32,6 +43,18 @@ export function useUserSettings() {
           }
           return;
         }
+        
+        // Handle 401 Unauthorized gracefully
+        if (response.status === 401) {
+          // Token expired or invalid - use defaults silently
+          // Don't log as error since this is expected when not authenticated
+          if (mountedRef.current) {
+            setSettings(defaultUserSettings);
+            setLoading(false);
+          }
+          return;
+        }
+        
         throw new Error(`Failed to fetch user settings: ${response.status}`);
       }
 
@@ -140,7 +163,13 @@ export function useUserSettings() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      logger.error("Error fetching user settings", err instanceof Error ? err : new Error(errorMessage));
+      
+      // Only log errors that aren't authentication-related
+      // 401 errors are handled above and shouldn't reach here, but check just in case
+      if (!errorMessage.includes("401") && !errorMessage.includes("Unauthorized")) {
+        logger.error("Error fetching user settings", err instanceof Error ? err : new Error(errorMessage));
+      }
+      
       if (mountedRef.current) {
         setError(errorMessage);
         // Use defaults on error

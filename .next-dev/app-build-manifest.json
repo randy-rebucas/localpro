@@ -136,11 +136,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(authenticated)/marketplace/page.js"
     ],
-    "/(authenticated)/notifications/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(authenticated)/notifications/page.js"
-    ],
     "/(auth)/auth/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -156,15 +151,50 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(auth)/auth/page.js"
     ],
-    "/(authenticated)/marketplace/bookings/[id]/page": [
+    "/(authenticated)/notifications/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(authenticated)/marketplace/bookings/[id]/page.js"
+      "static/chunks/app/(authenticated)/notifications/page.js"
+    ],
+    "/(authenticated)/marketplace/providers/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/marketplace/providers/page.js"
     ],
     "/(authenticated)/marketplace/my-bookings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(authenticated)/marketplace/my-bookings/page.js"
+    ],
+    "/(public)/support/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(public)/support/layout.js"
+    ],
+    "/(public)/support/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(public)/support/page.js"
+    ],
+    "/(authenticated)/marketplace/services/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/marketplace/services/[id]/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
+    ],
+    "/(authenticated)/marketplace/provider/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/marketplace/provider/[id]/page.js"
+    ],
+    "/(authenticated)/marketplace/services/[id]/book/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/marketplace/services/[id]/book/page.js"
     ]
   }
 }

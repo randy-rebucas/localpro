@@ -1158,7 +1158,7 @@ export default function ServiceDetailPage() {
                       <div className="flex items-center gap-2">
                         {providerId ? (
                           <Link
-                            href={`/marketplace/providers/${providerId}`}
+                            href={`/marketplace/provider/${providerId}`}
                             className="font-medium text-gray-700 hover:text-accent transition-colors cursor-pointer"
                           >
                             {providerName}
