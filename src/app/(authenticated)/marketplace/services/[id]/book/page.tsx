@@ -545,17 +545,41 @@ export default function BookServicePage() {
         }
       }
       
-      logger.error("Error processing booking", error instanceof Error ? error : new Error(String(error)), {
-        serviceId: service?._id || service?.id,
-        providerId: typeof service?.provider === 'string' ? service.provider : (service?.provider?._id || service?.provider?.id),
-        formData: {
-          bookingDate: formData.bookingDate,
-          bookingTime: formData.bookingTime,
-          duration: formData.duration,
-          paymentMethod: formData.paymentMethod
-        },
-        errorMessage: errorMessage
-      });
+      // Determine if this is a validation error (user input issue) or a system error
+      const isValidationError = errorMessage.includes('already passed') || 
+                                errorMessage.includes('at least 30 minutes') ||
+                                errorMessage.includes('Invalid date') ||
+                                errorMessage.includes('Please select') ||
+                                errorMessage.includes('Please complete') ||
+                                errorMessage.includes('Please check');
+      
+      // Log validation errors as warnings, system errors as errors
+      if (isValidationError) {
+        logger.warn("Booking validation failed", {
+          serviceId: service?._id || service?.id,
+          providerId: typeof service?.provider === 'string' ? service.provider : (service?.provider?._id || service?.provider?.id),
+          formData: {
+            bookingDate: formData.bookingDate,
+            bookingTime: formData.bookingTime,
+            duration: formData.duration,
+            paymentMethod: formData.paymentMethod
+          },
+          validationError: errorMessage
+        });
+      } else {
+        logger.error("Error processing booking", error instanceof Error ? error : new Error(String(error)), {
+          serviceId: service?._id || service?.id,
+          providerId: typeof service?.provider === 'string' ? service.provider : (service?.provider?._id || service?.provider?.id),
+          formData: {
+            bookingDate: formData.bookingDate,
+            bookingTime: formData.bookingTime,
+            duration: formData.duration,
+            paymentMethod: formData.paymentMethod
+          },
+          errorMessage: errorMessage
+        });
+      }
+      
       setError(errorMessage);
     } finally {
       setProcessingPayment(false);

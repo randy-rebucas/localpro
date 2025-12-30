@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect } from "react";
 import { PageError } from "@/components/ui/error";
 import { logger } from "@/lib/logger";

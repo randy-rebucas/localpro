@@ -10,10 +10,14 @@ import { logger } from './logger';
  * Check if user is authenticated (has API token)
  */
 export function isAuthenticated(): boolean {
-  const apiToken = document.cookie
-    .split(';')
-    .find(c => c.trim().startsWith('api-token='))
-    ?.split('=')[1];
+  const cookies = document.cookie.split(';');
+  const readCookie = (name: string) =>
+    cookies
+      .find(c => c.trim().startsWith(`${name}=`))
+      ?.split('=')[1];
+  
+  // Check both api-token and auth_token for compatibility
+  const apiToken = readCookie('api-token') || readCookie('auth_token');
   
   return !!apiToken && apiToken.trim() !== '';
 }
@@ -34,11 +38,15 @@ function getAuthHeaders(): HeadersInit | null {
     logger.debug('All cookies', { cookieCount: document.cookie.split(';').filter(c => c.trim()).length });
   }
 
-  // Get API token cookie from browser (non-httpOnly cookie)
-  const apiToken = document.cookie
-    .split(';')
-    .find(c => c.trim().startsWith('api-token='))
-    ?.split('=')[1];
+  // Get API token cookie from browser (check multiple cookie names for compatibility)
+  const cookies = document.cookie.split(';');
+  const readCookie = (name: string) =>
+    cookies
+      .find(c => c.trim().startsWith(`${name}=`))
+      ?.split('=')[1];
+
+  // Priority: api-token > auth_token (new implementation)
+  const apiToken = readCookie('api-token') || readCookie('auth_token');
 
   if (!apiToken) {
     // Return null instead of throwing error to allow graceful handling

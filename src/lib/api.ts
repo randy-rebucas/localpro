@@ -30,6 +30,12 @@ export const API_ENDPOINTS = {
   // Authentication & User Management
   authSendCode: "/api/auth/send-code",
   authVerifyCode: "/api/auth/verify-code",
+  authCheckEmail: "/api/auth/check-email",
+  authLoginEmail: "/api/auth/login-email",
+  authRegisterEmail: "/api/auth/register-email",
+  authSetPassword: "/api/auth/set-password",
+  authVerifyEmailOtp: "/api/auth/verify-email-otp",
+  authRefresh: "/api/auth/refresh",
   authRegister: "/api/auth/register",
   authCompleteOnboarding: "/api/auth/complete-onboarding",
   authProfileCompletionStatus: "/api/auth/profile-completion-status",

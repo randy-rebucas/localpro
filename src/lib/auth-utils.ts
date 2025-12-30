@@ -3,7 +3,7 @@ import { logger } from './logger';
 
 /**
  * Get API token from cookies (prioritizes api-token cookie from mobile auth)
- * Falls back to session cookie for backward compatibility
+ * Falls back to auth_token, session cookie, and localStorage for backward compatibility
  */
 export function getApiToken(): string | null {
   if (typeof document === 'undefined') return null;
@@ -15,7 +15,9 @@ export function getApiToken(): string | null {
       .find(cookie => cookie.trim().startsWith(`${name}=`))
       ?.split('=')[1];
 
+  // Check multiple cookie names for compatibility
   const apiTokenCookie = readCookie('api-token');
+  const authTokenCookie = readCookie('auth_token'); // New auth implementation
   const sessionCookie = readCookie('session');
 
   // Fallbacks: some flows store tokens in localStorage instead of cookies
@@ -30,11 +32,13 @@ export function getApiToken(): string | null {
     storageToken = null;
   }
 
-  const token = apiTokenCookie || sessionCookie || storageToken || null;
+  // Priority: api-token > auth_token > session > localStorage
+  const token = apiTokenCookie || authTokenCookie || sessionCookie || storageToken || null;
 
   if (process.env.NODE_ENV === 'development') {
     logger.debug('Token check', {
       hasApiToken: !!apiTokenCookie,
+      hasAuthToken: !!authTokenCookie,
       hasSessionToken: !!sessionCookie,
       hasStorageToken: !!storageToken,
       cookieCount: cookies.length,

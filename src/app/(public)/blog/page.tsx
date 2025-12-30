@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import Link from "next/link";
 import { StaticPageLayout } from "@/components/static-page-layout";
 import { HeroSection } from "@/components/static-hero";

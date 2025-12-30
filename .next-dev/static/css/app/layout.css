@@ -4182,6 +4182,9 @@
   .pr-11 {
     padding-right: calc(var(--spacing) * 11);
   }
+  .pr-12 {
+    padding-right: calc(var(--spacing) * 12);
+  }
   .pr-24 {
     padding-right: calc(var(--spacing) * 24);
   }
@@ -4792,6 +4795,9 @@
   }
   .opacity-80 {
     opacity: 80%;
+  }
+  .opacity-90 {
+    opacity: 90%;
   }
   .opacity-100 {
     opacity: 100%;
