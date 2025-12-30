@@ -1,22 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { EditProfileForm, type EditProfileUserProfile } from "@/components/edit-profile-form";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
-import { Edit3, RefreshCw, AlertCircle, ArrowLeft } from "lucide-react";
+import { Edit3, RefreshCw, AlertCircle, ArrowLeft, User, Briefcase, Package, GraduationCap, Building2, Info } from "lucide-react";
 import Link from "next/link";
+import { ProviderProfileForm } from "@/components/profile/provider-profile-form";
+import { SupplierProfileForm } from "@/components/profile/supplier-profile-form";
+import { InstructorProfileForm } from "@/components/profile/instructor-profile-form";
+import { AgencyProfileForm } from "@/components/profile/agency-profile-form";
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
+
+type EditTabType = "overview" | "provider" | "supplier" | "instructor" | "agency_owner" | "agency_admin";
 
 export default function EditProfilePage() {
   const [mounted, setMounted] = useState(false);
   const [profile, setProfile] = useState<EditProfileUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<EditTabType>("overview");
 
   useEffect(() => {
     setMounted(true);
@@ -157,6 +164,96 @@ export default function EditProfilePage() {
     fetchUserProfile();
   }, [mounted]);
 
+  // Check user roles
+  const hasProviderRole = useMemo(() => {
+    return profile?.roles && (profile.roles.includes('provider') || profile.roles.includes('PROVIDER'));
+  }, [profile?.roles]);
+
+  const hasSupplierRole = useMemo(() => {
+    return profile?.roles && (profile.roles.includes('supplier') || profile.roles.includes('SUPPLIER'));
+  }, [profile?.roles]);
+
+  const hasInstructorRole = useMemo(() => {
+    return profile?.roles && (profile.roles.includes('instructor') || profile.roles.includes('INSTRUCTOR'));
+  }, [profile?.roles]);
+
+  const hasAgencyOwnerRole = useMemo(() => {
+    return profile?.roles && (profile.roles.includes('agency_owner') || profile.roles.includes('AGENCY_OWNER'));
+  }, [profile?.roles]);
+
+  const hasAgencyAdminRole = useMemo(() => {
+    return profile?.roles && (profile.roles.includes('agency_admin') || profile.roles.includes('AGENCY_ADMIN'));
+  }, [profile?.roles]);
+
+  // Get additional roles (excluding client)
+  const additionalRoles = useMemo(() => {
+    if (!profile?.roles) return [];
+    return profile.roles.filter(
+      (role) =>
+        role.toLowerCase() !== 'client' &&
+        (role.toLowerCase() === 'provider' ||
+          role.toLowerCase() === 'supplier' ||
+          role.toLowerCase() === 'instructor' ||
+          role.toLowerCase() === 'agency_owner' ||
+          role.toLowerCase() === 'agency_admin' ||
+          role.toLowerCase() === 'admin')
+    );
+  }, [profile?.roles]);
+
+  // Role-specific tab configuration
+  const getRoleConfig = (role: string) => {
+    const roleLower = role.toLowerCase();
+    switch (roleLower) {
+      case 'provider':
+        return {
+          title: "Since you are also a Provider, you are required to complete this form.",
+          description: "Complete your provider profile to start accepting jobs and growing your business.",
+          icon: Briefcase,
+          color: "accent",
+          tabId: "provider" as EditTabType,
+          label: "Provider Profile",
+        };
+      case 'supplier':
+        return {
+          title: "Since you are also a Supplier, you are required to complete this form.",
+          description: "Complete your supplier profile to start listing products and managing inventory.",
+          icon: Package,
+          color: "amber",
+          tabId: "supplier" as EditTabType,
+          label: "Supplier Profile",
+        };
+      case 'instructor':
+        return {
+          title: "Since you are also an Instructor, you are required to complete this form.",
+          description: "Complete your instructor profile to start creating courses and teaching students.",
+          icon: GraduationCap,
+          color: "purple",
+          tabId: "instructor" as EditTabType,
+          label: "Instructor Profile",
+        };
+      case 'agency_owner':
+        return {
+          title: "Since you are also an Agency Owner, you are required to complete this form.",
+          description: "Complete your agency profile to manage your team and grow your agency.",
+          icon: Building2,
+          color: "blue",
+          tabId: "agency_owner" as EditTabType,
+          label: "Agency Owner Profile",
+        };
+      case 'agency_admin':
+        return {
+          title: "Since you are also an Agency Admin, you are required to complete this form.",
+          description: "Complete your agency admin profile to help manage your agency operations.",
+          icon: Building2,
+          color: "blue",
+          tabId: "agency_admin" as EditTabType,
+          label: "Agency Admin Profile",
+        };
+      default:
+        return null;
+    }
+  };
+
   if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 relative overflow-hidden">
@@ -227,6 +324,57 @@ export default function EditProfilePage() {
           </div>
         </div>
 
+        {/* Navigation Tabs */}
+        {!loading && !error && profile && (
+          <div className="flex items-center gap-1 border-b border-gray-200 overflow-x-auto">
+            {/* Overview Tab - Always visible */}
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap ${
+                activeTab === "overview"
+                  ? "text-purple-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span>Basic Information</span>
+              </div>
+              {activeTab === "overview" && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600 rounded-t-full" />
+              )}
+            </button>
+
+            {/* Role-specific Tabs */}
+            {additionalRoles.map((role) => {
+              const roleConfig = getRoleConfig(role);
+              if (!roleConfig) return null;
+              const Icon = roleConfig.icon;
+              const isActive = activeTab === roleConfig.tabId;
+
+              return (
+                <button
+                  key={role}
+                  onClick={() => setActiveTab(roleConfig.tabId)}
+                  className={`px-4 py-3 text-sm font-medium transition-colors relative whitespace-nowrap ${
+                    isActive
+                      ? "text-purple-600"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4" />
+                    <span>{roleConfig.label}</span>
+                  </div>
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600 rounded-t-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Error State */}
         {error && (
           <div className="bg-gradient-to-br from-white to-red-50/30 rounded-2xl border-2 border-red-300 shadow-xl p-6">
@@ -250,8 +398,113 @@ export default function EditProfilePage() {
         )}
 
         {/* Edit Form */}
-        {!error && (
-          <EditProfileForm initialProfile={profile} />
+        {!error && profile && (
+          <div className="space-y-6">
+            {/* Role-specific requirement messages */}
+            {activeTab !== "overview" && additionalRoles.length > 0 && (
+              (() => {
+                const role = additionalRoles.find(r => {
+                  const config = getRoleConfig(r);
+                  return config?.tabId === activeTab;
+                });
+                if (!role) return null;
+                const roleConfig = getRoleConfig(role);
+                if (!roleConfig) return null;
+                const Icon = roleConfig.icon;
+                const colorConfig = {
+                  accent: {
+                    gradient: "from-accent/10 via-accent/5",
+                    border: "border-accent/30",
+                    text: "text-accent",
+                    bg: "bg-accent/20",
+                  },
+                  amber: {
+                    gradient: "from-amber-50 via-amber-50/50",
+                    border: "border-amber-300",
+                    text: "text-amber-700",
+                    bg: "bg-amber-100",
+                  },
+                  purple: {
+                    gradient: "from-purple-50 via-purple-50/50",
+                    border: "border-purple-300",
+                    text: "text-purple-700",
+                    bg: "bg-purple-100",
+                  },
+                  blue: {
+                    gradient: "from-blue-50 via-blue-50/50",
+                    border: "border-blue-300",
+                    text: "text-blue-700",
+                    bg: "bg-blue-100",
+                  },
+                };
+                const colors = colorConfig[roleConfig.color as keyof typeof colorConfig] || colorConfig.accent;
+
+                return (
+                  <div className={`bg-gradient-to-r ${colors.gradient} to-white rounded-2xl border-2 ${colors.border} shadow-lg p-6`}>
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+                        <Info className={`w-6 h-6 ${colors.text}`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">{roleConfig.title}</h3>
+                        <p className="text-gray-600">{roleConfig.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+
+            {/* Overview Tab - Basic Profile Form */}
+            {activeTab === "overview" && (
+              <EditProfileForm initialProfile={profile} />
+            )}
+
+            {/* Provider Tab */}
+            {activeTab === "provider" && hasProviderRole && (
+              <ProviderProfileForm
+                onSave={() => {
+                  // Refresh profile data if needed
+                }}
+              />
+            )}
+
+            {/* Supplier Tab */}
+            {activeTab === "supplier" && hasSupplierRole && (
+              <SupplierProfileForm
+                onSave={() => {
+                  // Refresh profile data if needed
+                }}
+              />
+            )}
+
+            {/* Instructor Tab */}
+            {activeTab === "instructor" && hasInstructorRole && (
+              <InstructorProfileForm
+                onSave={() => {
+                  // Refresh profile data if needed
+                }}
+              />
+            )}
+
+            {/* Agency Owner Tab */}
+            {activeTab === "agency_owner" && hasAgencyOwnerRole && (
+              <AgencyProfileForm
+                onSave={() => {
+                  // Refresh profile data if needed
+                }}
+              />
+            )}
+
+            {/* Agency Admin Tab */}
+            {activeTab === "agency_admin" && hasAgencyAdminRole && (
+              <AgencyProfileForm
+                onSave={() => {
+                  // Refresh profile data if needed
+                }}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>

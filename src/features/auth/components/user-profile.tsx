@@ -836,14 +836,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                         <p className="text-gray-700 py-2">{profile.profile.address.country}</p>
                       </div>
                     )}
-                    {(profile.profile.address.coordinates?.lat || profile.profile.address.coordinates?.lng) && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Coordinates</label>
-                        <p className="text-gray-700 py-2">
-                          {profile.profile.address.coordinates.lat?.toFixed(6)}, {profile.profile.address.coordinates.lng?.toFixed(6)}
-                        </p>
-                      </div>
-                    )}
+                    {/* Coordinates are hidden from user - auto-filled via geocoding */}
                   </div>
                 </div>
               )}

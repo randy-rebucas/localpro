@@ -495,6 +495,75 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     }
   }, [setValue]);
 
+  // Auto-geocode address when address fields change
+  useEffect(() => {
+    const addressStreet = watch("profile.address.street");
+    const addressCity = watch("profile.address.city");
+    const addressState = watch("profile.address.state");
+    const addressZipCode = watch("profile.address.zipCode");
+    const addressCountry = watch("profile.address.country");
+
+    // Only geocode if we have at least city and state (minimum required for geocoding)
+    if (addressCity && addressState) {
+      // Debounce geocoding to avoid too many API calls
+      const timeoutId = setTimeout(async () => {
+        try {
+          // Build address string for geocoding
+          const addressParts = [
+            addressStreet,
+            addressCity,
+            addressState,
+            addressZipCode,
+            addressCountry,
+          ].filter(Boolean);
+          
+          if (addressParts.length < 2) return; // Need at least city and state
+
+          const addressString = addressParts.join(", ");
+
+          const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.mapsGeocode}`, 
+            createAuthFetchOptions({
+              method: "POST",
+              body: JSON.stringify({ address: addressString }),
+            })
+          );
+
+          if (response.ok) {
+            const geocodeData = await response.json();
+            
+            if (geocodeData.success && geocodeData.data) {
+              const location = geocodeData.data.location;
+              if (location && typeof location.lat === 'number' && typeof location.lng === 'number') {
+                // Set coordinates in both formats
+                setValue("locationPoint", {
+                  type: "Point",
+                  coordinates: [location.lng, location.lat], // GeoJSON format: [lng, lat]
+                });
+                
+                setValue("profile.address.coordinates", {
+                  lat: location.lat,
+                  lng: location.lng,
+                });
+              }
+            }
+          }
+        } catch (error) {
+          // Silently fail - coordinates are optional
+          logger.debug('Geocoding failed', error instanceof Error ? error : new Error(String(error)));
+        }
+      }, 1000); // 1 second debounce
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [
+    watch("profile.address.street"),
+    watch("profile.address.city"),
+    watch("profile.address.state"),
+    watch("profile.address.zipCode"),
+    watch("profile.address.country"),
+    setValue,
+  ]);
+
   const buildNestedPayload = useCallback((values: ProfileForm) => {
     // Check if user is a client - clients can only update specific fields
     const currentUserRoles = session?.user?.roles || [];
@@ -2467,62 +2536,8 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                   </div>
                 </div>
 
-                {/* Location Coordinates */}
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
-                      <MapPin className="w-4 h-4 inline mr-2" />
-                      Location Coordinates
-                    </label>
-                    <button
-                      type="button"
-                      onClick={getCurrentLocation}
-                      disabled={isGettingLocation}
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isGettingLocation ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Getting Location...
-                        </>
-                      ) : (
-                        <>
-                          <MapPin className="w-4 h-4" />
-                          Use My Current Location
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Longitude</label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={watch("locationPoint")?.coordinates?.[0]?.toFixed(6) || ""}
-                        readOnly
-                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm"
-                        placeholder="Not set"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Latitude</label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={watch("locationPoint")?.coordinates?.[1]?.toFixed(6) || ""}
-                        readOnly
-                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm"
-                        placeholder="Not set"
-                      />
-                    </div>
-                  </div>
-                  {watch("locationPoint")?.coordinates && (
-                    <p className="text-xs text-gray-500">
-                      Location format: GeoJSON Point [longitude, latitude]
-                    </p>
-                  )}
-                </div>
+                {/* Location Coordinates - Hidden from user, auto-filled via geocoding */}
+                {/* Coordinates are automatically filled when address fields are updated */}
                 </div>
 
 

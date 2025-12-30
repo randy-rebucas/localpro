@@ -78,10 +78,30 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
             setApiData(data as ProfileCompletenessResponse);
           }
         } else {
+          // Check if it's a 404 - this is expected if the endpoint doesn't exist yet
+          if (response.status === 404) {
+            // Log as debug/info instead of error since this is expected
+            logger.debug('Profile completeness endpoint not found, using client-side calculation', undefined, { 
+              endpoint: url,
+              status: response.status 
+            });
+            // Don't set error state for 404s - just fall back silently
+            return;
+          }
           throw new Error(`Failed to fetch profile completeness: ${response.status}`);
         }
       } catch (err) {
-        logger.error('Error fetching profile completeness', err instanceof Error ? err : new Error(String(err)));
+        // Only log as error if it's not a 404 or network error
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const is404 = errorMessage.includes('404') || errorMessage.includes('Failed to fetch');
+        
+        if (!is404) {
+          logger.error('Error fetching profile completeness', err instanceof Error ? err : new Error(String(err)));
+        } else {
+          logger.debug('Profile completeness endpoint unavailable, using client-side calculation', undefined, { 
+            error: errorMessage 
+          });
+        }
         setError('Failed to load profile completeness');
         // Will fall back to client-side calculation
       } finally {
