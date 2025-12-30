@@ -81,7 +81,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
           // Check if it's a 404 - this is expected if the endpoint doesn't exist yet
           if (response.status === 404) {
             // Log as debug/info instead of error since this is expected
-            logger.debug('Profile completeness endpoint not found, using client-side calculation', undefined, { 
+            logger.debug('Profile completeness endpoint not found, using client-side calculation', { 
               endpoint: url,
               status: response.status 
             });
@@ -98,7 +98,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
         if (!is404) {
           logger.error('Error fetching profile completeness', err instanceof Error ? err : new Error(String(err)));
         } else {
-          logger.debug('Profile completeness endpoint unavailable, using client-side calculation', undefined, { 
+          logger.debug('Profile completeness endpoint unavailable, using client-side calculation', { 
             error: errorMessage 
           });
         }

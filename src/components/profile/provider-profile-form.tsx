@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type React from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,8 +8,6 @@ import { z } from "zod";
 import {
   Briefcase,
   Building2,
-  MapPin,
-  DollarSign,
   Shield,
   FileText,
   Image as ImageIcon,
@@ -18,17 +16,8 @@ import {
   Save,
   Plus,
   X,
-  AlertCircle,
   Loader2,
-  Calendar,
-  Clock,
-  Globe,
-  Phone,
-  Mail,
   Award,
-  Languages,
-  Car,
-  DollarSign as DollarIcon,
   Upload,
   X as XIcon,
 } from "lucide-react";
@@ -225,11 +214,11 @@ type ProviderProfileForm = z.infer<typeof providerProfileSchema>;
 interface ProviderProfileFormProps {
   initialData?: {
     providerType?: 'individual' | 'business' | 'agency';
-    businessInfo?: any;
-    professionalInfo?: any;
-    verification?: any;
-    portfolio?: any;
-    preferences?: any;
+    businessInfo?: Record<string, unknown>;
+    professionalInfo?: Record<string, unknown>;
+    verification?: Record<string, unknown>;
+    portfolio?: Record<string, unknown>;
+    preferences?: Record<string, unknown>;
     onboarding?: {
       currentStep?: string;
       progress?: number;
@@ -243,7 +232,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
   const [activeStep, setActiveStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [providerProfile, setProviderProfile] = useState<any>(null);
+  const [, setProviderProfile] = useState<Record<string, unknown> | null>(null);
   const [serviceCategories, setServiceCategories] = useState<Array<{ key: string; name: string }>>([]);
   
   // Document upload state
@@ -257,6 +246,34 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
   const [selectedPortfolioFiles, setSelectedPortfolioFiles] = useState<File[]>([]);
   const [uploadingPortfolio, setUploadingPortfolio] = useState(false);
   const [uploadedPortfolio, setUploadedPortfolio] = useState<Array<{ id: string; name: string; type: string; url: string }>>([]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+    watch,
+    setValue,
+    reset,
+  } = useForm<ProviderProfileForm>({
+    resolver: zodResolver(providerProfileSchema),
+    defaultValues: {
+      providerType: initialData?.providerType || 'individual',
+      businessInfo: (initialData?.businessInfo as ProviderProfileForm['businessInfo']) || undefined,
+      professionalInfo: {
+        specialties: (initialData?.professionalInfo?.specialties as ProviderProfileForm['professionalInfo']['specialties']) || [],
+        languages: (initialData?.professionalInfo?.languages as ProviderProfileForm['professionalInfo']['languages']) || [],
+        availability: (initialData?.professionalInfo?.availability as ProviderProfileForm['professionalInfo']['availability']) || undefined,
+        emergencyServices: (initialData?.professionalInfo?.emergencyServices as boolean) || false,
+        travelDistance: (initialData?.professionalInfo?.travelDistance as number) || 0,
+        minimumJobValue: (initialData?.professionalInfo?.minimumJobValue as number) || 0,
+        maximumJobValue: (initialData?.professionalInfo?.maximumJobValue as number) || 0,
+      },
+      verification: (initialData?.verification as ProviderProfileForm['verification']) || undefined,
+      portfolio: (initialData?.portfolio as ProviderProfileForm['portfolio']) || undefined,
+      preferences: (initialData?.preferences as ProviderProfileForm['preferences']) || undefined,
+    },
+  });
 
   // Fetch provider profile
   useEffect(() => {
@@ -313,7 +330,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
       }
     };
     fetchProviderProfile();
-  }, []);
+  }, [reset]);
 
   // Fetch service categories
   useEffect(() => {
@@ -324,7 +341,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
           const data = await response.json();
           
           // Handle different response structures
-          let categories: any[] = [];
+          let categories: Array<{ key?: string; name?: string; _id?: string }> = [];
           
           // Check if response is directly an array
           if (Array.isArray(data)) {
@@ -353,10 +370,14 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
           
           // Only map if we have a valid array
           if (Array.isArray(categories) && categories.length > 0) {
-            setServiceCategories(categories.map((cat: any) => ({
-              key: cat.key || cat._id || cat.name?.toLowerCase().replace(/\s+/g, '_'),
-              name: cat.name || cat.key || cat._id,
-            })));
+            setServiceCategories(categories
+              .map((cat: { key?: string; name?: string; _id?: string }) => {
+                const key = cat.key || cat._id || cat.name?.toLowerCase().replace(/\s+/g, '_');
+                const name = cat.name || cat.key || cat._id;
+                if (!key || !name) return null;
+                return { key, name };
+              })
+              .filter((item): item is { key: string; name: string } => item !== null));
           } else {
             // Set default categories if API doesn't return any
             setServiceCategories([
@@ -393,34 +414,6 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
     fetchCategories();
   }, []);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    control,
-    watch,
-    setValue,
-    reset,
-  } = useForm<ProviderProfileForm>({
-    resolver: zodResolver(providerProfileSchema),
-    defaultValues: {
-      providerType: initialData?.providerType || 'individual',
-      businessInfo: initialData?.businessInfo || {},
-      professionalInfo: {
-        specialties: initialData?.professionalInfo?.specialties || [],
-        languages: initialData?.professionalInfo?.languages || [],
-        availability: initialData?.professionalInfo?.availability || [],
-        emergencyServices: initialData?.professionalInfo?.emergencyServices || false,
-        travelDistance: initialData?.professionalInfo?.travelDistance || 0,
-        minimumJobValue: initialData?.professionalInfo?.minimumJobValue || 0,
-        maximumJobValue: initialData?.professionalInfo?.maximumJobValue || 0,
-      },
-      verification: initialData?.verification || {},
-      portfolio: initialData?.portfolio || {},
-      preferences: initialData?.preferences || {},
-    },
-  });
-
   const providerType = watch('providerType');
   
   // If providerType is 'individual' and user is on step 2, redirect to step 3
@@ -431,15 +424,15 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
   }, [providerType, activeStep]);
   
   // Auto-geocode business address when address fields change
+  const businessStreet = watch('businessInfo.businessAddress.street');
+  const businessCity = watch('businessInfo.businessAddress.city');
+  const businessState = watch('businessInfo.businessAddress.state');
+  const businessZipCode = watch('businessInfo.businessAddress.zipCode');
+  const businessCountry = watch('businessInfo.businessAddress.country');
+
   useEffect(() => {
     // Only geocode if provider type is business or agency and we're on step 2
     if (providerType === 'individual' || activeStep !== 2) return;
-
-    const businessCity = watch('businessInfo.businessAddress.city');
-    const businessState = watch('businessInfo.businessAddress.state');
-    const businessStreet = watch('businessInfo.businessAddress.street');
-    const businessZipCode = watch('businessInfo.businessAddress.zipCode');
-    const businessCountry = watch('businessInfo.businessAddress.country');
 
     // Only geocode if we have at least city and state
     if (businessCity && businessState) {
@@ -491,11 +484,11 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
   }, [
     providerType,
     activeStep,
-    watch('businessInfo.businessAddress.street'),
-    watch('businessInfo.businessAddress.city'),
-    watch('businessInfo.businessAddress.state'),
-    watch('businessInfo.businessAddress.zipCode'),
-    watch('businessInfo.businessAddress.country'),
+    businessStreet,
+    businessCity,
+    businessState,
+    businessZipCode,
+    businessCountry,
     setValue,
   ]);
 
@@ -505,11 +498,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
   });
   const { fields: languageFields, append: addLanguage, remove: removeLanguage } = useFieldArray({
     control,
-    name: 'professionalInfo.languages' as any,
-  });
-  const { fields: availabilityFields, append: addAvailability, remove: removeAvailability } = useFieldArray({
-    control,
-    name: 'professionalInfo.availability',
+    name: 'professionalInfo.languages' as never,
   });
   const { fields: licenseFields, append: addLicense, remove: removeLicense } = useFieldArray({
     control,
@@ -521,8 +510,8 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
   });
 
   // Transform form data to API format based on active step
-  const transformFormDataToAPI = (data: ProviderProfileForm, step: number): any => {
-    const payload: any = {};
+  const transformFormDataToAPI = (data: ProviderProfileForm, step: number): Record<string, unknown> => {
+    const payload: Record<string, unknown> = {};
 
     switch (step) {
       case 1: // Profile Setup
@@ -531,7 +520,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
 
       case 2: // Business Info
         if (data.businessInfo) {
-          payload.businessInfo = {
+          const businessInfo: Record<string, unknown> = {
             businessName: data.businessInfo.businessName,
             businessType: data.businessInfo.businessType,
             registrationNumber: data.businessInfo.businessRegistration,
@@ -551,32 +540,43 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
             },
           };
           // Remove undefined fields
-          if (payload.businessInfo.contact) {
-            Object.keys(payload.businessInfo.contact).forEach(key => {
-              if (payload.businessInfo.contact[key] === undefined) {
-                delete payload.businessInfo.contact[key];
+          const contact = businessInfo.contact as Record<string, unknown> | undefined;
+          if (contact) {
+            Object.keys(contact).forEach(key => {
+              if (contact[key] === undefined) {
+                delete contact[key];
               }
             });
-            if (payload.businessInfo.contact.address) {
-              Object.keys(payload.businessInfo.contact.address).forEach(key => {
-                if (payload.businessInfo.contact.address[key] === undefined) {
-                  delete payload.businessInfo.contact.address[key];
+            const address = contact.address as Record<string, unknown> | undefined;
+            if (address) {
+              Object.keys(address).forEach(key => {
+                if (address[key] === undefined) {
+                  delete address[key];
                 }
               });
-              if (Object.keys(payload.businessInfo.contact.address).length === 0) {
-                delete payload.businessInfo.contact.address;
+              if (Object.keys(address).length === 0) {
+                delete contact.address;
               }
             }
-            if (Object.keys(payload.businessInfo.contact).length === 0) {
-              delete payload.businessInfo.contact;
+            if (Object.keys(contact).length === 0) {
+              delete businessInfo.contact;
             }
+          }
+          // Remove undefined fields from businessInfo
+          Object.keys(businessInfo).forEach(key => {
+            if (businessInfo[key] === undefined) {
+              delete businessInfo[key];
+            }
+          });
+          if (Object.keys(businessInfo).length > 0) {
+            payload.businessInfo = businessInfo;
           }
         }
         break;
 
       case 3: // Professional Info
         if (data.professionalInfo) {
-          payload.professionalInfo = {
+          const professionalInfo: Record<string, unknown> = {
             specialties: data.professionalInfo.specialties?.map(spec => ({
               category: spec.category,
               skills: spec.skills || [],
@@ -600,7 +600,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
               if (!Array.isArray(avail)) {
                 const result: Record<string, { available: boolean; startTime: string; endTime: string }> = {};
                 Object.keys(avail).forEach(day => {
-                  const dayData = (avail as any)[day];
+                  const dayData = (avail as Record<string, { available?: boolean; start?: string; end?: string }>)[day];
                   if (dayData?.available && dayData?.start && dayData?.end) {
                     result[day] = {
                       available: true,
@@ -630,8 +630,18 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
             maximumJobValue: data.professionalInfo.maximumJobValue || undefined,
           };
           // Remove undefined fields
-          if (payload.professionalInfo.availability && Object.keys(payload.professionalInfo.availability).length === 0) {
-            delete payload.professionalInfo.availability;
+          const availability = professionalInfo.availability as Record<string, unknown> | undefined;
+          if (availability && Object.keys(availability).length === 0) {
+            delete professionalInfo.availability;
+          }
+          // Remove undefined fields from professionalInfo
+          Object.keys(professionalInfo).forEach(key => {
+            if (professionalInfo[key] === undefined) {
+              delete professionalInfo[key];
+            }
+          });
+          if (Object.keys(professionalInfo).length > 0) {
+            payload.professionalInfo = professionalInfo;
           }
         }
         break;
@@ -639,33 +649,37 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
       case 4: // Verification
         // Verification data is typically handled separately, but we can update insurance info
         if (data.verification?.insurance) {
-          payload.businessInfo = payload.businessInfo || {};
-          payload.businessInfo.insurance = {
+          const businessInfo: Record<string, unknown> = (payload.businessInfo as Record<string, unknown>) || {};
+          businessInfo.insurance = {
             provider: data.verification.insurance.insuranceProvider || undefined,
             policyNumber: data.verification.insurance.policyNumber || undefined,
             coverageAmount: data.verification.insurance.coverageAmount || undefined,
             expiryDate: data.verification.insurance.expiryDate || undefined,
           };
           // Remove undefined fields
-          Object.keys(payload.businessInfo.insurance).forEach(key => {
-            if (payload.businessInfo.insurance[key] === undefined) {
-              delete payload.businessInfo.insurance[key];
+          const insurance = businessInfo.insurance as Record<string, unknown>;
+          Object.keys(insurance).forEach(key => {
+            if (insurance[key] === undefined) {
+              delete insurance[key];
             }
           });
+          if (Object.keys(insurance).length > 0) {
+            payload.businessInfo = businessInfo;
+          }
         }
         break;
 
       case 7: // Preferences
         if (data.preferences) {
-          const prefs: any = {};
+          const prefs: Record<string, unknown> = {};
           
           // Notification Settings
           if (data.preferences.notificationSettings) {
-            prefs.notificationSettings = {};
+            const notificationSettings: Record<string, unknown> = {};
             
             if (data.preferences.notificationSettings.email !== undefined) {
               const emailEnabled = data.preferences.notificationSettings.email;
-              prefs.notificationSettings.email = {
+              notificationSettings.email = {
                 newBookings: emailEnabled,
                 jobUpdates: emailEnabled,
                 paymentUpdates: emailEnabled,
@@ -674,7 +688,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
             
             if (data.preferences.notificationSettings.sms !== undefined) {
               const smsEnabled = data.preferences.notificationSettings.sms;
-              prefs.notificationSettings.sms = {
+              notificationSettings.sms = {
                 newBookings: smsEnabled,
                 urgentUpdates: smsEnabled,
               };
@@ -682,31 +696,31 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
             
             if (data.preferences.notificationSettings.push !== undefined) {
               const pushEnabled = data.preferences.notificationSettings.push;
-              prefs.notificationSettings.push = {
+              notificationSettings.push = {
                 enabled: pushEnabled,
                 newBookings: pushEnabled,
                 jobUpdates: pushEnabled,
               };
             }
             
-            if (Object.keys(prefs.notificationSettings).length === 0) {
-              delete prefs.notificationSettings;
+            if (Object.keys(notificationSettings).length > 0) {
+              prefs.notificationSettings = notificationSettings;
             }
           }
           
           // Communication Preferences
           if (data.preferences.communicationPreferences) {
-            prefs.communicationPreferences = {};
+            const communicationPreferences: Record<string, unknown> = {};
             if (data.preferences.communicationPreferences.preferredMethod) {
-              prefs.communicationPreferences.preferredContactMethod = 
+              communicationPreferences.preferredContactMethod = 
                 data.preferences.communicationPreferences.preferredMethod;
             }
             if (data.preferences.communicationPreferences.responseTime) {
-              prefs.communicationPreferences.responseTime = 
+              communicationPreferences.responseTime = 
                 data.preferences.communicationPreferences.responseTime;
             }
-            if (Object.keys(prefs.communicationPreferences).length === 0) {
-              delete prefs.communicationPreferences;
+            if (Object.keys(communicationPreferences).length > 0) {
+              prefs.communicationPreferences = communicationPreferences;
             }
           }
           
@@ -727,23 +741,25 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
     }
 
     // Remove undefined nested objects
-    const cleanPayload = (obj: any): any => {
+    const cleanPayload = (obj: unknown): Record<string, unknown> | undefined => {
       if (Array.isArray(obj)) {
-        return obj.map(cleanPayload);
+        const cleaned = obj.map(cleanPayload).filter((item): item is Record<string, unknown> => item !== undefined);
+        return cleaned.length > 0 ? (cleaned as unknown as Record<string, unknown>) : undefined;
       } else if (obj !== null && typeof obj === 'object') {
-        const cleaned: any = {};
-        for (const key in obj) {
-          const value = cleanPayload(obj[key]);
+        const cleaned: Record<string, unknown> = {};
+        for (const key in obj as Record<string, unknown>) {
+          const value = cleanPayload((obj as Record<string, unknown>)[key]);
           if (value !== undefined) {
             cleaned[key] = value;
           }
         }
         return Object.keys(cleaned).length > 0 ? cleaned : undefined;
       }
-      return obj;
+      return obj !== undefined ? (obj as Record<string, unknown>) : undefined;
     };
 
-    return cleanPayload(payload);
+    const cleaned = cleanPayload(payload);
+    return cleaned || {};
   };
 
   const onSubmit = async (data: ProviderProfileForm) => {
@@ -1168,7 +1184,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
                           Service Areas <span className="text-red-500">*</span>
                         </label>
                         <div className="space-y-2">
-                          {watch(`professionalInfo.specialties.${index}.serviceAreas`)?.map((area: any, areaIndex: number) => (
+                          {watch(`professionalInfo.specialties.${index}.serviceAreas`)?.map((area: { city?: string; state?: string; radius?: number; zipCode?: string }, areaIndex: number) => (
                             <div key={areaIndex} className="flex items-center gap-2">
                               <Input
                                 placeholder="City"
@@ -1205,7 +1221,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
                                 type="button"
                                 onClick={() => {
                                   const currentAreas = watch(`professionalInfo.specialties.${index}.serviceAreas`) || [];
-                                  const updatedAreas = currentAreas.filter((_: any, i: number) => i !== areaIndex);
+                                  const updatedAreas = currentAreas.filter((_, i: number) => i !== areaIndex);
                                   setValue(`professionalInfo.specialties.${index}.serviceAreas`, updatedAreas);
                                 }}
                                 className="text-red-600 hover:text-red-700"
@@ -1238,7 +1254,7 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
                 <button
                   type="button"
                   onClick={() => addSpecialty({
-                    category: 'other' as any,
+                    category: 'other',
                     serviceAreas: [{ city: '', state: '', radius: 0 }],
                   })}
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 border border-purple-300 rounded-lg hover:bg-purple-50"
@@ -1290,19 +1306,19 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
                     <div key={day} className="flex items-center gap-4 p-3 border border-gray-200 rounded-lg">
                       <input
                         type="checkbox"
-                        {...register(`professionalInfo.availability.${day}.available` as any)}
+                        {...register(`professionalInfo.availability.${day}.available` as Parameters<typeof register>[0])}
                         className="w-4 h-4 text-purple-600 rounded"
                       />
                       <label className="flex-1 capitalize">{day}</label>
                       <Input
                         type="time"
-                        {...register(`professionalInfo.availability.${day}.start` as any)}
+                        {...register(`professionalInfo.availability.${day}.start` as Parameters<typeof register>[0])}
                         className="w-32"
                       />
                       <span>to</span>
                       <Input
                         type="time"
-                        {...register(`professionalInfo.availability.${day}.end` as any)}
+                        {...register(`professionalInfo.availability.${day}.end` as Parameters<typeof register>[0])}
                         className="w-32"
                       />
                     </div>

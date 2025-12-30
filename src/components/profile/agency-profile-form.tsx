@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Building2, Save, Loader2, Plus, X, MapPin, Shield, Settings, Users, DollarSign } from "lucide-react";
+import { Building2, Save, Loader2, Plus, X, MapPin, Shield, Settings, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -118,7 +118,7 @@ const agencyProfileSchema = z.object({
 type AgencyProfileForm = z.infer<typeof agencyProfileSchema>;
 
 interface AgencyProfileFormProps {
-  initialData?: any;
+  initialData?: Partial<AgencyProfileForm>;
   onSave?: () => void;
 }
 
@@ -178,19 +178,9 @@ export function AgencyProfileForm({ initialData, onSave }: AgencyProfileFormProp
     },
   });
 
-  const { fields: serviceAreaFields, append: addServiceArea, remove: removeServiceArea } = useFieldArray({
-    control,
-    name: 'serviceAreas',
-  });
-
   const { fields: serviceFields, append: addService, remove: removeService } = useFieldArray({
     control,
     name: 'services',
-  });
-
-  const { fields: documentFields, append: addDocument, remove: removeDocument } = useFieldArray({
-    control,
-    name: 'verification.documents',
   });
 
   // Fetch agency profile if exists
@@ -223,8 +213,8 @@ export function AgencyProfileForm({ initialData, onSave }: AgencyProfileFormProp
   }, []);
 
   // Transform form data to API format
-  const transformFormDataToAPI = (data: AgencyProfileForm): any => {
-    const payload: any = {};
+  const transformFormDataToAPI = (data: AgencyProfileForm): Record<string, unknown> => {
+    const payload: Record<string, unknown> = {};
     
     if (data.name) payload.name = data.name;
     if (data.description) payload.description = data.description;
@@ -244,23 +234,27 @@ export function AgencyProfileForm({ initialData, onSave }: AgencyProfileFormProp
         } : undefined,
       };
       // Remove undefined nested fields
-      if (payload.contact.address) {
-        Object.keys(payload.contact.address).forEach(key => {
-          if (payload.contact.address[key] === undefined) {
-            delete payload.contact.address[key];
+      const contact = payload.contact as Record<string, unknown>;
+      if (contact && typeof contact === 'object' && contact.address) {
+        const address = contact.address as Record<string, unknown>;
+        Object.keys(address).forEach(key => {
+          if (address[key] === undefined) {
+            delete address[key];
           }
         });
-        if (Object.keys(payload.contact.address).length === 0) {
-          delete payload.contact.address;
+        if (Object.keys(address).length === 0) {
+          delete contact.address;
         }
       }
-      Object.keys(payload.contact).forEach(key => {
-        if (payload.contact[key] === undefined) {
-          delete payload.contact[key];
+      if (contact && typeof contact === 'object') {
+        Object.keys(contact).forEach(key => {
+          if (contact[key] === undefined) {
+            delete contact[key];
+          }
+        });
+        if (Object.keys(contact).length === 0) {
+          delete payload.contact;
         }
-      });
-      if (Object.keys(payload.contact).length === 0) {
-        delete payload.contact;
       }
     }
     
@@ -278,23 +272,27 @@ export function AgencyProfileForm({ initialData, onSave }: AgencyProfileFormProp
         } : undefined,
       };
       // Remove undefined fields
-      if (payload.business.insurance) {
-        Object.keys(payload.business.insurance).forEach(key => {
-          if (payload.business.insurance[key] === undefined) {
-            delete payload.business.insurance[key];
+      const business = payload.business as Record<string, unknown>;
+      if (business && typeof business === 'object' && business.insurance) {
+        const insurance = business.insurance as Record<string, unknown>;
+        Object.keys(insurance).forEach(key => {
+          if (insurance[key] === undefined) {
+            delete insurance[key];
           }
         });
-        if (Object.keys(payload.business.insurance).length === 0) {
-          delete payload.business.insurance;
+        if (Object.keys(insurance).length === 0) {
+          delete business.insurance;
         }
       }
-      Object.keys(payload.business).forEach(key => {
-        if (payload.business[key] === undefined) {
-          delete payload.business[key];
+      if (business && typeof business === 'object') {
+        Object.keys(business).forEach(key => {
+          if (business[key] === undefined) {
+            delete business[key];
+          }
+        });
+        if (Object.keys(business).length === 0) {
+          delete payload.business;
         }
-      });
-      if (Object.keys(payload.business).length === 0) {
-        delete payload.business;
       }
     }
     

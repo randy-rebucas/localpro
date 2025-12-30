@@ -10,13 +10,11 @@ import {
   Clock,
   AlertCircle,
   FileText,
-  Image as ImageIcon,
   Settings,
   TrendingUp,
   Star,
   MapPin,
   DollarSign,
-  Award,
   ExternalLink,
   ArrowRight,
   XCircle,
@@ -25,7 +23,7 @@ import {
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import type { Provider, Onboarding, BusinessInfo, ProfessionalInfo, Verification, Performance } from "@/types/providers";
+import type { Provider } from "@/types/providers";
 
 interface ProviderProfileSectionProps {
   userId?: string;
@@ -213,7 +211,7 @@ export function ProviderProfileSection({ userId }: ProviderProfileSectionProps) 
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {ONBOARDING_STEPS.map((step, index) => {
+            {ONBOARDING_STEPS.map((step) => {
               const stepStatus = getStepStatus(step.key);
               const isCompleted = stepStatus === "completed";
               const isCurrent = onboarding.currentStep === step.key;

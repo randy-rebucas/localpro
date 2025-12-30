@@ -12,8 +12,6 @@ import {
   Save,
   CheckCircle,
   AlertCircle,
-  MapPin,
-  Loader2
 } from "lucide-react";
 import type {
   BusinessType,
@@ -286,7 +284,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialValues, setInitialValues] = useState<ProfileForm | null>(null);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const {
     register,
@@ -366,14 +363,14 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   }, [watchedValues, initialValues]);
 
   // Function to get current location and reverse geocode
+  // Note: Currently unused but kept for future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getCurrentLocation = useCallback(async () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser");
       return;
     }
 
-    setIsGettingLocation(true);
-    
     try {
       // Get current position
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -490,19 +487,17 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         errorMessage = error.message;
       }
       toast.error(errorMessage);
-    } finally {
-      setIsGettingLocation(false);
     }
   }, [setValue]);
 
   // Auto-geocode address when address fields change
-  useEffect(() => {
-    const addressStreet = watch("profile.address.street");
-    const addressCity = watch("profile.address.city");
-    const addressState = watch("profile.address.state");
-    const addressZipCode = watch("profile.address.zipCode");
-    const addressCountry = watch("profile.address.country");
+  const addressStreet = watch("profile.address.street");
+  const addressCity = watch("profile.address.city");
+  const addressState = watch("profile.address.state");
+  const addressZipCode = watch("profile.address.zipCode");
+  const addressCountry = watch("profile.address.country");
 
+  useEffect(() => {
     // Only geocode if we have at least city and state (minimum required for geocoding)
     if (addressCity && addressState) {
       // Debounce geocoding to avoid too many API calls
@@ -549,18 +544,18 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           }
         } catch (error) {
           // Silently fail - coordinates are optional
-          logger.debug('Geocoding failed', error instanceof Error ? error : new Error(String(error)));
+          logger.debug('Geocoding failed', { error: error instanceof Error ? error.message : String(error) });
         }
       }, 1000); // 1 second debounce
 
       return () => clearTimeout(timeoutId);
     }
   }, [
-    watch("profile.address.street"),
-    watch("profile.address.city"),
-    watch("profile.address.state"),
-    watch("profile.address.zipCode"),
-    watch("profile.address.country"),
+    addressStreet,
+    addressCity,
+    addressState,
+    addressZipCode,
+    addressCountry,
     setValue,
   ]);
 

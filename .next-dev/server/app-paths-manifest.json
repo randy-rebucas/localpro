@@ -2,7 +2,6 @@
   "/(auth)/auth/page": "app/(auth)/auth/page.js",
   "/(authenticated)/profile/page": "app/(authenticated)/profile/page.js",
   "/(authenticated)/profile/edit/page": "app/(authenticated)/profile/edit/page.js",
-  "/admin/page": "app/admin/page.js",
   "/(authenticated)/dashboard/page": "app/(authenticated)/dashboard/page.js",
   "/(authenticated)/marketplace/page": "app/(authenticated)/marketplace/page.js"
 }

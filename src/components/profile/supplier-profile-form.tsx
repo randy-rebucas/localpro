@@ -12,8 +12,6 @@ import { logger } from "@/lib/logger";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const supplierCategoryEnum = z.enum(['cleaning_supplies', 'tools', 'materials', 'equipment']);
-
 const supplierProfileSchema = z.object({
   // Business Information
   businessName: z.string().min(1, "Business name is required"),
@@ -70,7 +68,7 @@ const supplierProfileSchema = z.object({
 type SupplierProfileForm = z.infer<typeof supplierProfileSchema>;
 
 interface SupplierProfileFormProps {
-  initialData?: any;
+  initialData?: Partial<SupplierProfileForm>;
   onSave?: () => void;
 }
 
@@ -84,8 +82,6 @@ export function SupplierProfileForm({ initialData, onSave }: SupplierProfileForm
     handleSubmit,
     formState: { errors },
     control,
-    watch,
-    setValue,
   } = useForm<SupplierProfileForm>({
     resolver: zodResolver(supplierProfileSchema),
     defaultValues: initialData || {
@@ -120,17 +116,17 @@ export function SupplierProfileForm({ initialData, onSave }: SupplierProfileForm
 
   const { fields: categoryFields, append: addCategory, remove: removeCategory } = useFieldArray({
     control,
-    name: 'productCategories',
+    name: 'productCategories' as never,
   });
 
   const { fields: shippingMethodFields, append: addShippingMethod, remove: removeShippingMethod } = useFieldArray({
     control,
-    name: 'shippingInfo.shippingMethods',
+    name: 'shippingInfo.shippingMethods' as never,
   });
 
   const { fields: paymentMethodFields, append: addPaymentMethod, remove: removePaymentMethod } = useFieldArray({
     control,
-    name: 'paymentInfo.acceptedMethods',
+    name: 'paymentInfo.acceptedMethods' as never,
   });
 
   // Fetch supplier profile if exists
@@ -154,8 +150,8 @@ export function SupplierProfileForm({ initialData, onSave }: SupplierProfileForm
   }, []);
 
   // Transform form data to API format (for product/supply item)
-  const transformFormDataToAPI = (data: SupplierProfileForm): any => {
-    const payload: any = {};
+  const transformFormDataToAPI = (data: SupplierProfileForm): Record<string, unknown> => {
+    const payload: Record<string, unknown> = {};
     
     // Map business info to product fields
     if (data.businessName) payload.name = data.businessName;
@@ -178,13 +174,16 @@ export function SupplierProfileForm({ initialData, onSave }: SupplierProfileForm
         coordinates: data.businessAddress.coordinates || undefined,
       };
       // Remove undefined fields
-      Object.keys(payload.location).forEach(key => {
-        if (payload.location[key] === undefined) {
-          delete payload.location[key];
+      const location = payload.location as Record<string, unknown>;
+      if (location && typeof location === 'object') {
+        Object.keys(location).forEach(key => {
+          if (location[key] === undefined) {
+            delete location[key];
+          }
+        });
+        if (Object.keys(location).length === 0) {
+          delete payload.location;
         }
-      });
-      if (Object.keys(payload.location).length === 0) {
-        delete payload.location;
       }
     }
     
@@ -194,13 +193,16 @@ export function SupplierProfileForm({ initialData, onSave }: SupplierProfileForm
         maxStock: data.inventoryManagement.defaultMaxStock || undefined,
       };
       // Remove undefined fields
-      Object.keys(payload.inventory).forEach(key => {
-        if (payload.inventory[key] === undefined) {
-          delete payload.inventory[key];
+      const inventory = payload.inventory as Record<string, unknown>;
+      if (inventory && typeof inventory === 'object') {
+        Object.keys(inventory).forEach(key => {
+          if (inventory[key] === undefined) {
+            delete inventory[key];
+          }
+        });
+        if (Object.keys(inventory).length === 0) {
+          delete payload.inventory;
         }
-      });
-      if (Object.keys(payload.inventory).length === 0) {
-        delete payload.inventory;
       }
     }
     

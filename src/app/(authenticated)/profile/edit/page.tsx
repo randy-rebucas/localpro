@@ -410,7 +410,6 @@ export default function EditProfilePage() {
                 if (!role) return null;
                 const roleConfig = getRoleConfig(role);
                 if (!roleConfig) return null;
-                const Icon = roleConfig.icon;
                 const colorConfig = {
                   accent: {
                     gradient: "from-accent/10 via-accent/5",

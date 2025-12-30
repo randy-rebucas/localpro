@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import Link from "next/link";
 import {
   CheckCircle,
-  Circle,
   ArrowRight,
   User,
   Mail,
@@ -157,14 +156,14 @@ export function ProfileCompletionGuide({
           field: "verification",
           priority: "high",
           category: "verification",
-          checkComplete: (p) => !!p.isVerified || !!p.verification?.isVerified,
+          checkComplete: (p) => !!p.isVerified || !!p.verification?.identityVerified || !!p.verification?.businessVerified || !!p.verification?.verifiedAt,
           getActionUrl: () => "/profile/edit#verification",
         }
       );
     }
 
     return baseSteps;
-  }, [hasProviderRole]);
+  }, [hasProviderRole, providerOnboardingCompleted]);
 
   const completedSteps = useMemo(() => {
     if (!profile) return [];

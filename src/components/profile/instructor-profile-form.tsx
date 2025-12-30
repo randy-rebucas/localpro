@@ -79,14 +79,14 @@ const instructorProfileSchema = z.object({
 type InstructorProfileForm = z.infer<typeof instructorProfileSchema>;
 
 interface InstructorProfileFormProps {
-  initialData?: any;
+  initialData?: Partial<InstructorProfileForm>;
   onSave?: () => void;
 }
 
 export function InstructorProfileForm({ initialData, onSave }: InstructorProfileFormProps) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [courseId, setCourseId] = useState<string | null>(null);
+  const [courseId] = useState<string | null>(null);
 
   const {
     register,
@@ -128,7 +128,7 @@ export function InstructorProfileForm({ initialData, onSave }: InstructorProfile
 
   const { fields: specialtyFields, append: addSpecialty, remove: removeSpecialty } = useFieldArray({
     control,
-    name: 'specialties',
+    name: 'specialties' as never,
   });
 
   const { fields: certificationFields, append: addCertification, remove: removeCertification } = useFieldArray({
@@ -143,12 +143,12 @@ export function InstructorProfileForm({ initialData, onSave }: InstructorProfile
 
   const { fields: languageFields, append: addLanguage, remove: removeLanguage } = useFieldArray({
     control,
-    name: 'languages',
+    name: 'languages' as never,
   });
 
   const { fields: categoryFields, append: addCategory, remove: removeCategory } = useFieldArray({
     control,
-    name: 'courseCategories',
+    name: 'courseCategories' as never,
   });
 
   // Fetch instructor profile if exists
@@ -174,8 +174,8 @@ export function InstructorProfileForm({ initialData, onSave }: InstructorProfile
   // Transform form data to API format (for course - instructor info might be part of course)
   // Note: This form collects instructor profile info, but API docs show PATCH for courses
   // This might need adjustment based on actual API structure
-  const transformFormDataToAPI = (data: InstructorProfileForm): any => {
-    const payload: any = {};
+  const transformFormDataToAPI = (data: InstructorProfileForm): Record<string, unknown> => {
+    const payload: Record<string, unknown> = {};
     
     // Map instructor info - this might be used when creating/updating courses
     // or might need a separate instructor profile endpoint
@@ -201,13 +201,16 @@ export function InstructorProfileForm({ initialData, onSave }: InstructorProfile
         currency: data.pricing.currency || 'USD',
       };
       // Remove undefined fields
-      Object.keys(payload.pricing).forEach(key => {
-        if (payload.pricing[key] === undefined) {
-          delete payload.pricing[key];
+      const pricing = payload.pricing as Record<string, unknown>;
+      if (pricing && typeof pricing === 'object') {
+        Object.keys(pricing).forEach(key => {
+          if (pricing[key] === undefined) {
+            delete pricing[key];
+          }
+        });
+        if (Object.keys(pricing).length === 0) {
+          delete payload.pricing;
         }
-      });
-      if (Object.keys(payload.pricing).length === 0) {
-        delete payload.pricing;
       }
     }
     
