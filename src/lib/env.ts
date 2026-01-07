@@ -83,6 +83,9 @@ export const CLIENT_CONFIG = {
   // Analytics (public)
   googleAnalyticsId: getOptionalEnvVar('NEXT_PUBLIC_GA_ID'),
   googleTagManagerId: getOptionalEnvVar('NEXT_PUBLIC_GTM_ID'),
+  
+  // N8N Chat Widget
+  n8nChatWebhookUrl: getOptionalEnvVar('NEXT_PUBLIC_N8N_CHAT_WEBHOOK_URL'),
 } as const;
 
 // ===========================================

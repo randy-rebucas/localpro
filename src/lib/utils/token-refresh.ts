@@ -167,6 +167,8 @@ function scheduleTokenRefresh(delay: number): void {
     if (newTokens) {
       setAuthToken(newTokens.token);
       setRefreshToken(newTokens.refreshToken);
+      // Also update api-token cookie for backward compatibility
+      updateApiTokenCookie(newTokens.token);
       
       // Schedule next refresh
       initializeTokenTracking(newTokens.token, newTokens.refreshToken);
@@ -181,6 +183,30 @@ function scheduleTokenRefresh(delay: number): void {
 }
 
 /**
+ * Check if token is already expired
+ */
+function isTokenExpired(token: string): boolean {
+  const expiration = getTokenExpiration(token);
+  if (!expiration) return false;
+  
+  const now = Date.now();
+  return now >= expiration;
+}
+
+/**
+ * Update api-token cookie for backward compatibility
+ */
+function updateApiTokenCookie(token: string): void {
+  if (typeof window === 'undefined') return;
+  
+  const oneWeek = 60 * 60 * 24 * 7;
+  const isProd = process.env.NODE_ENV === 'production';
+  const secure = isProd ? '; Secure' : '';
+  const sameSite = process.env.NODE_ENV === 'production' ? '; SameSite=Strict' : '; SameSite=Lax';
+  document.cookie = `api-token=${token}; Path=/; Max-Age=${oneWeek}${sameSite}${secure}`;
+}
+
+/**
  * Get valid token, refreshing if needed
  */
 export async function getValidToken(): Promise<string | null> {
@@ -190,13 +216,19 @@ export async function getValidToken(): Promise<string | null> {
     return null;
   }
 
-  // Check if token is expiring soon
-  if (isTokenExpiringSoon(token)) {
+  // Check if token is already expired or expiring soon
+  const expired = isTokenExpired(token);
+  const expiringSoon = isTokenExpiringSoon(token);
+  
+  if (expired || expiringSoon) {
+    logger.debug('Token expired or expiring soon, attempting refresh', { expired, expiringSoon });
     const newTokens = await refreshAccessToken();
     
     if (newTokens) {
       setAuthToken(newTokens.token);
       setRefreshToken(newTokens.refreshToken);
+      // Also update api-token cookie for backward compatibility
+      updateApiTokenCookie(newTokens.token);
       initializeTokenTracking(newTokens.token, newTokens.refreshToken);
       return newTokens.token;
     } else {

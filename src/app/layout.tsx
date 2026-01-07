@@ -6,6 +6,7 @@ import { ResourceHints } from "@/components/resource-hints";
 import { WebVitalsReporter } from "@/components/web-vitals";
 import { LiveChatProvider } from "@/components/live-chat";
 import { LiveChatWidget } from "@/components/live-chat";
+import { N8NChatWidget } from "@/components/n8n-chat/N8NChatWidget";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { CLIENT_CONFIG } from "@/lib/env";
 import { SITE_CONFIG, PAGE_METADATA, generateKeywords } from "@/lib/seo-config";
@@ -48,13 +49,13 @@ export const metadata: Metadata = {
   },
   description: PAGE_METADATA.home.description,
   keywords: generateKeywords(),
-  
+
   // Application info
   applicationName: SITE_CONFIG.name,
   authors: [{ name: SITE_CONFIG.name, url: SITE_CONFIG.url }],
   generator: 'Next.js',
   referrer: 'origin-when-cross-origin',
-  
+
   // Icons and manifest
   icons: {
     icon: [
@@ -67,7 +68,7 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/manifest.json',
-  
+
   // Canonical and alternates
   metadataBase: new URL(SITE_CONFIG.url),
   alternates: {
@@ -76,7 +77,7 @@ export const metadata: Metadata = {
       'en-PH': '/',
     },
   },
-  
+
   // OpenGraph for social sharing
   openGraph: {
     type: 'website',
@@ -103,7 +104,7 @@ export const metadata: Metadata = {
       },
     ],
   },
-  
+
   // Twitter Card
   twitter: {
     card: 'summary_large_image',
@@ -113,7 +114,7 @@ export const metadata: Metadata = {
     description: PAGE_METADATA.home.description,
     images: ['/og-image.png'],
   },
-  
+
   // Robots
   robots: {
     index: true,
@@ -128,7 +129,7 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  
+
   // Verification tokens (add your actual tokens)
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
@@ -139,14 +140,14 @@ export const metadata: Metadata = {
       'msvalidate.01': process.env.NEXT_PUBLIC_BING_WEBSITE_VERIFICATION || '', // Bing Webmaster verification
     },
   },
-  
+
   // App-specific metadata
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: SITE_CONFIG.name,
   },
-  
+
   // Format detection
   formatDetection: {
     telephone: true,
@@ -154,10 +155,10 @@ export const metadata: Metadata = {
     address: true,
     email: true,
   },
-  
+
   // Category
   category: 'business',
-  
+
   // Other useful metadata
   other: {
     'mobile-web-app-capable': 'yes',
@@ -177,11 +178,11 @@ export default function RootLayout({
         {/* JSON-LD Structured Data */}
         <OrganizationJsonLd />
         <WebsiteJsonLd />
-        
+
         {/* Preconnect to external domains for better performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
+
         {/* DNS prefetch for API domain */}
         <link rel="dns-prefetch" href="https://localpro-super-app.onrender.com" />
       </head>
@@ -212,6 +213,7 @@ export default function RootLayout({
                   - Handles storage, sync, and cross-tab updates automatically
                   - Manages user's active role view (client, provider, etc.) */}
               <RoleViewProvider>
+
                 <LiveChatProvider>
                   {children}
                   <LiveChatWidget />
@@ -223,6 +225,10 @@ export default function RootLayout({
         {CLIENT_CONFIG.googleTagManagerId && (
           <GoogleTagManager gtmId={CLIENT_CONFIG.googleTagManagerId} />
         )}
+        {CLIENT_CONFIG.n8nChatWebhookUrl && (
+          <N8NChatWidget webhookUrl={CLIENT_CONFIG.n8nChatWebhookUrl} />
+        )}
+
       </body>
     </html>
   );

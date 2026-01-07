@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle,
@@ -15,6 +15,8 @@ import {
   Briefcase,
   Sparkles,
   TrendingUp,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import type { UserProfileData } from "@/components/user-profile";
 
@@ -41,6 +43,8 @@ export function ProfileCompletionGuide({
   hasProviderRole = false,
   providerOnboardingCompleted = false 
 }: ProfileCompletionGuideProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const steps: Step[] = useMemo(() => {
     const baseSteps: Step[] = [
       {
@@ -211,23 +215,36 @@ export function ProfileCompletionGuide({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-      {/* Header */}
+      {/* Header - Profile Completeness */}
       <div className="bg-gradient-to-r from-accent/10 via-accent/5 to-white p-6 border-b border-gray-200">
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1">
             <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-accent" />
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">Complete Your Profile</h3>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-gray-900">Profile Completeness</h3>
               <p className="text-sm text-gray-600 mt-1">
                 Follow these steps to unlock more opportunities and increase your visibility
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-accent">{completionPercentage}%</div>
-            <div className="text-xs text-gray-500">Complete</div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-3xl font-bold text-accent">{completionPercentage}%</div>
+              <div className="text-xs text-gray-500">Complete</div>
+            </div>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-all duration-300"
+              aria-label={isExpanded ? 'Collapse profile completeness' : 'Expand profile completeness'}
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-5 h-5" />
+              ) : (
+                <ChevronDown className="w-5 h-5" />
+              )}
+            </button>
           </div>
         </div>
 
@@ -240,6 +257,10 @@ export function ProfileCompletionGuide({
         </div>
       </div>
 
+      {/* Collapsible Content */}
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
+        isExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+      }`}>
       {/* Next Step Highlight */}
       {nextStep && (
         <div className="p-6 bg-gradient-to-r from-accent/5 to-accent/10 border-b border-gray-200">
@@ -385,6 +406,7 @@ export function ProfileCompletionGuide({
             <div className="text-sm text-gray-600">Higher Trust Score</div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

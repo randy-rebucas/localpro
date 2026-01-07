@@ -22,7 +22,6 @@ import {
   Target,
   Zap
 } from "lucide-react";
-import { ProfileCompleteness } from "./profile-completeness";
 import { AccountInfo } from "./account-info";
 import { WalletInfo } from "./wallet-info";
 import { AgencyInfo } from "./agency-info";
@@ -1217,12 +1216,6 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         {/* Profile Stats Sidebar */}
         <div className="lg:col-span-1">
           <div className="space-y-6">
-            {/* Enhanced Profile Completeness */}
-            <ProfileCompleteness
-              profileData={profile as unknown as Record<string, unknown>}
-              onSuggestionClick={handleSuggestionClick}
-            />
-
             {/* Account Info */}
             <AccountInfo 
               profile={profile} 

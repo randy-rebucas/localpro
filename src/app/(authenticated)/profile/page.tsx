@@ -311,78 +311,7 @@ export default function ProfilePage() {
             <div className="mt-6">
               {activeTab === "overview" && (
                 <div className="space-y-6">
-                  {/* Role-specific requirement messages for additional roles */}
-                  {additionalRoles.length > 0 && (
-                    <div className="space-y-4">
-                      {additionalRoles.map((role) => {
-                        const roleConfig = getRoleConfig(role);
-                        if (!roleConfig) return null;
-                        const Icon = roleConfig.icon;
-                        const colorConfig = {
-                          accent: {
-                            gradient: "from-accent/10 via-accent/5",
-                            border: "border-accent/30",
-                            text: "text-accent",
-                            bg: "bg-accent/20",
-                          },
-                          amber: {
-                            gradient: "from-amber-50 via-amber-50/50",
-                            border: "border-amber-300",
-                            text: "text-amber-700",
-                            bg: "bg-amber-100",
-                          },
-                          purple: {
-                            gradient: "from-purple-50 via-purple-50/50",
-                            border: "border-purple-300",
-                            text: "text-purple-700",
-                            bg: "bg-purple-100",
-                          },
-                          blue: {
-                            gradient: "from-blue-50 via-blue-50/50",
-                            border: "border-blue-300",
-                            text: "text-blue-700",
-                            bg: "bg-blue-100",
-                          },
-                        };
-                        const colors = colorConfig[roleConfig.color as keyof typeof colorConfig] || colorConfig.accent;
-
-                        return (
-                          <div
-                            key={role}
-                            className={`bg-gradient-to-r ${colors.gradient} to-white rounded-2xl border-2 ${colors.border} shadow-lg p-6`}
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0`}>
-                                <Icon className={`w-6 h-6 ${colors.text}`} />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">{roleConfig.title}</h3>
-                                <p className="text-gray-600 mb-4">{roleConfig.description}</p>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => setActiveTab(roleConfig.tabId)}
-                                    className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all shadow-md hover:shadow-lg ${
-                                      roleConfig.color === 'accent'
-                                        ? 'bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent'
-                                        : roleConfig.color === 'amber'
-                                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800'
-                                        : roleConfig.color === 'purple'
-                                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800'
-                                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
-                                    }`}
-                                  >
-                                    <Icon className="w-4 h-4" />
-                                    Go to {roleConfig.label}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
+                  
                   {/* Profile Completion Guide */}
                   <ProfileCompletionGuide profile={profile} hasProviderRole={hasProviderRole} />
                   

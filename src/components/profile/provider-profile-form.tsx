@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
-import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { createAuthFetchOptions, createAuthFetchOptionsAsync, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -772,22 +772,46 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
       // Only send request if there's data to update
       if (Object.keys(apiPayload).length > 0) {
         // Update provider profile using PATCH
+        // Use async version to ensure token is refreshed if needed
+        const fetchOptions = await createAuthFetchOptionsAsync({
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(apiPayload),
+        });
+        
         const response = await fetch(
           `${API_BASE_URL}${API_ENDPOINTS.providersProfile}`,
-          {
-            ...createAuthFetchOptions({
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(apiPayload),
-            }),
-          }
+          fetchOptions
         );
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || 'Failed to save provider profile');
+          let errorMessage = 'Failed to save provider profile';
+          
+          // Try to get detailed error message
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+            
+            // Add status code for debugging
+            if (process.env.NODE_ENV === 'development') {
+              errorMessage += ` (Status: ${response.status})`;
+            }
+          } catch {
+            // If JSON parsing fails, use status text
+            errorMessage = response.statusText || errorMessage;
+            if (process.env.NODE_ENV === 'development') {
+              errorMessage += ` (Status: ${response.status})`;
+            }
+          }
+          
+          // Check if it's an authentication error
+          if (response.status === 401) {
+            errorMessage = 'Your session has expired. Please refresh the page and try again.';
+          }
+          
+          throw new Error(errorMessage);
         }
 
         const responseData = await response.json().catch(() => ({}));
@@ -808,20 +832,21 @@ export function ProviderProfileForm({ initialData, onSave }: ProviderProfileForm
       ];
       
       if (activeStep <= stepNames.length) {
+        // Use async version to ensure token is refreshed if needed
+        const stepFetchOptions = await createAuthFetchOptionsAsync({
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            step: stepNames[activeStep - 1],
+            data: {},
+          }),
+        });
+        
         const stepResponse = await fetch(
           `${API_BASE_URL}${API_ENDPOINTS.providersOnboardingStep}`,
-          {
-            ...createAuthFetchOptions({
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                step: stepNames[activeStep - 1],
-                data: {},
-              }),
-            }),
-          }
+          stepFetchOptions
         );
 
         if (stepResponse.ok) {

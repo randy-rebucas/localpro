@@ -1,5 +1,6 @@
 import { API_BASE_URL, API_ENDPOINTS } from './api';
 import { logger } from './logger';
+import { getValidToken } from './utils/token-refresh';
 
 /**
  * Client-side API utilities for frontend components
@@ -31,31 +32,25 @@ export function clearApiToken(): void {
 
 /**
  * Get authentication headers for client-side requests
+ * Automatically refreshes token if it's expired or expiring soon
  */
-function getAuthHeaders(): HeadersInit | null {
+async function getAuthHeaders(): Promise<HeadersInit | null> {
   // Debug: Log all cookies in development
   if (process.env.NODE_ENV === 'development') {
     logger.debug('All cookies', { cookieCount: document.cookie.split(';').filter(c => c.trim()).length });
   }
 
-  // Get API token cookie from browser (check multiple cookie names for compatibility)
-  const cookies = document.cookie.split(';');
-  const readCookie = (name: string) =>
-    cookies
-      .find(c => c.trim().startsWith(`${name}=`))
-      ?.split('=')[1];
-
-  // Priority: api-token > auth_token (new implementation)
-  const apiToken = readCookie('api-token') || readCookie('auth_token');
-
-  if (!apiToken) {
+  // Use getValidToken() which automatically refreshes expired tokens
+  const token = await getValidToken();
+  
+  if (!token) {
     // Return null instead of throwing error to allow graceful handling
     return null;
   }
 
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiToken}`,
+    'Authorization': `Bearer ${token}`,
   };
 }
 
@@ -67,7 +62,7 @@ export async function makeClientAuthenticatedRequestWithEndpoint(
   options: RequestInit = {}
 ): Promise<Response> {
   const url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
-  const authHeaders = getAuthHeaders();
+  const authHeaders = await getAuthHeaders();
   
   if (!authHeaders) {
     throw new Error("No authentication token found - please log in");
@@ -104,7 +99,7 @@ export async function makeClientAuthenticatedRequestWithPath(
     url += `?${queryString}`;
   }
   
-  const authHeaders = getAuthHeaders();
+  const authHeaders = await getAuthHeaders();
   
   if (!authHeaders) {
     throw new Error("No authentication token found - please log in");
@@ -374,7 +369,7 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
   }
 
   try {
-    const authHeaders = getAuthHeaders();
+    const authHeaders = await getAuthHeaders();
     
     if (!authHeaders) {
       throw new Error("No authentication token found - please log in");
@@ -398,10 +393,31 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
       },
     });
     
-    // Check if token is expired
+    // Check if token is expired (even after refresh attempt)
     if (isExpiredTokenResponse(response)) {
-      handleExpiredToken();
-      throw new Error("Authentication expired - please log in again");
+      // Try one more time with token refresh
+      const refreshedHeaders = await getAuthHeaders();
+      if (refreshedHeaders) {
+        // Retry the request with refreshed token
+        const retryResponse = await fetch(url, {
+          ...fetchOptions,
+          headers: {
+            ...refreshedHeaders,
+            ...fetchOptions.headers,
+          },
+        });
+        
+        // If still 401, then refresh token is also expired
+        if (isExpiredTokenResponse(retryResponse)) {
+          handleExpiredToken();
+          throw new Error("Authentication expired - please log in again");
+        }
+        
+        return retryResponse;
+      } else {
+        handleExpiredToken();
+        throw new Error("Authentication expired - please log in again");
+      }
     }
     
     return response;
@@ -442,7 +458,7 @@ export async function makeClientAuthenticatedRequestWithPathSafe(
   options: RequestInit = {}
 ): Promise<Response> {
   // Check if we have authentication headers before making the request
-  const authHeaders = getAuthHeaders();
+  const authHeaders = await getAuthHeaders();
   if (!authHeaders) {
     throw new Error("No authentication token found - please log in");
   }
@@ -450,10 +466,25 @@ export async function makeClientAuthenticatedRequestWithPathSafe(
   try {
     const response = await makeClientAuthenticatedRequestWithPath(baseEndpoint, pathParams, queryParams, options);
     
-    // Check if token is expired
+    // Check if token is expired (even after refresh attempt)
     if (isExpiredTokenResponse(response)) {
-      handleExpiredToken();
-      throw new Error("Authentication expired - please log in again");
+      // Try one more time with token refresh
+      const refreshedHeaders = await getAuthHeaders();
+      if (refreshedHeaders) {
+        // Retry the request with refreshed token
+        const retryResponse = await makeClientAuthenticatedRequestWithPath(baseEndpoint, pathParams, queryParams, options);
+        
+        // If still 401, then refresh token is also expired
+        if (isExpiredTokenResponse(retryResponse)) {
+          handleExpiredToken();
+          throw new Error("Authentication expired - please log in again");
+        }
+        
+        return retryResponse;
+      } else {
+        handleExpiredToken();
+        throw new Error("Authentication expired - please log in again");
+      }
     }
     
     return response;

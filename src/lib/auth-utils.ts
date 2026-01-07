@@ -1,5 +1,6 @@
 // Utility functions for authentication
 import { logger } from './logger';
+import { getValidToken } from './utils/token-refresh';
 
 /**
  * Get API token from cookies (prioritizes api-token cookie from mobile auth)
@@ -75,6 +76,9 @@ export function createAuthHeaders(additionalHeaders: Record<string, string> = {}
  * Create fetch options with authentication
  * Uses api-token cookie (from mobile auth response) or falls back to session cookie
  * All secure REST API requests will use Authorization: Bearer {token}
+ * 
+ * NOTE: This is synchronous and does NOT refresh expired tokens.
+ * For automatic token refresh, use createAuthFetchOptionsAsync() instead.
  */
 export function createAuthFetchOptions(options: RequestInit = {}): RequestInit {
   const apiToken = getApiToken();
@@ -85,6 +89,34 @@ export function createAuthFetchOptions(options: RequestInit = {}): RequestInit {
       hasApiToken: !!apiToken,
       tokenLength: apiToken?.length || 0,
       allCookies: typeof document !== 'undefined' ? document.cookie : 'N/A'
+    });
+  }
+  
+  return {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiToken && { 'Authorization': `Bearer ${apiToken}` }),
+      ...options.headers
+    },
+    credentials: 'include'
+  };
+}
+
+/**
+ * Create fetch options with authentication (async version with automatic token refresh)
+ * Automatically refreshes expired or expiring tokens before making the request
+ * Use this for critical operations where token expiration could cause failures
+ */
+export async function createAuthFetchOptionsAsync(options: RequestInit = {}): Promise<RequestInit> {
+  // Use getValidToken which automatically refreshes expired tokens
+  const apiToken = await getValidToken();
+  
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    logger.debug('createAuthFetchOptionsAsync', {
+      hasApiToken: !!apiToken,
+      tokenLength: apiToken?.length || 0,
     });
   }
   
