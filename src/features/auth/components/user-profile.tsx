@@ -572,13 +572,6 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     router.prefetch('/profile/edit');
   }, [router]);
 
-  const handleEditProfile = useCallback(() => {
-    router.push('/profile/edit');
-  }, [router]);
-
-  const handleSuggestionClick = useCallback(() => {
-    handleEditProfile();
-  }, [handleEditProfile]);
 
   // Quick Actions handlers
   const handleViewPublicProfile = useCallback(async () => {

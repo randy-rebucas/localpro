@@ -21,7 +21,9 @@ export class MarketplacePage {
   }
 
   async openServiceDetails(index = 0) {
-    await this.viewDetailsButtons.nth(index).click();
+    const button = this.viewDetailsButtons.nth(index);
+    await button.waitFor({ state: 'visible', timeout: 5000 });
+    await button.click();
   }
 
   async bookServiceFromList(index = 0) {

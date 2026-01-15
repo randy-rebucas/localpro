@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run tests (fallback)",
+			"type": "shell",
+			"command": "pnpm test || pnpm run test || echo 'No test script found in package.json'",
+			"group": "test"
+		},
+		{
+			"label": "Run Playwright E2E tests",
+			"type": "shell",
+			"command": "pnpm run test:e2e",
+			"group": "test"
+		}
+	]
+}
