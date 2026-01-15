@@ -344,6 +344,31 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Check maintenance mode - redirect to maintenance page if enabled
+  const maintenanceMode = process.env.ENABLE_MAINTENANCE_MODE === 'true';
+  if (maintenanceMode && pathname !== '/maintenance') {
+    // Check for bypass conditions
+    const bypassKey = process.env.MAINTENANCE_BYPASS_KEY;
+    const url = request.nextUrl;
+    const bypassParam = url.searchParams.get('bypass');
+    const bypassCookie = request.cookies.get('maintenance_bypass')?.value;
+
+    // Allow bypass if:
+    // 1. Query parameter 'bypass=true'
+    // 2. Cookie 'maintenance_bypass' is set
+    // 3. Query parameter matches the bypass key (if set)
+    const shouldBypass = bypassParam === 'true' ||
+                        bypassCookie === 'true' ||
+                        (bypassKey && bypassParam === bypassKey);
+
+    if (!shouldBypass) {
+      logger.info('Maintenance mode enabled, redirecting to maintenance page', { pathname });
+      return NextResponse.redirect(new URL('/maintenance', request.url));
+    } else {
+      logger.info('Maintenance mode bypassed', { pathname, method: bypassParam ? 'query' : bypassCookie ? 'cookie' : 'key' });
+    }
+  }
+
   // Get authentication status
   const { isAuthenticated, userRoles } = await checkAuth(request);
 

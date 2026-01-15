@@ -768,6 +768,25 @@ function SignInForm() {
     user?: {
       firstName?: string;
       lastName?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+      latitude?: number;
+      longitude?: number;
+      notificationPreferences?: {
+        email?: boolean;
+        sms?: boolean;
+        push?: boolean;
+        marketing?: boolean;
+      };
+      profileComplete?: boolean;
+      locationComplete?: boolean;
+      notificationsComplete?: boolean;
+      onboardingComplete?: boolean;
       [key: string]: unknown;
     };
     isNewUser?: boolean;
@@ -819,10 +838,49 @@ function SignInForm() {
 
         toast.success("Signed in successfully!");
 
-        // 5. Redirect based on profile completion
-        const destination = result.isNewUser || !result.user?.firstName || !result.user?.lastName
-          ? '/onboarding'
-          : redirectTo;
+        // 5. Determine onboarding step based on profile completion
+        // Onboarding flow: Basic Profile → Location → Notification Preferences → Welcome → Dashboard
+        let destination = redirectTo;
+        
+        const user = result.user;
+        
+        // Check if basic profile is complete (firstName, lastName, phone/email)
+        const hasBasicProfile = user?.firstName && user?.lastName && (user?.phone || user?.email);
+        
+        // Check if location is complete
+        const hasLocation = user?.address && user?.city && user?.state && user?.country;
+        
+        // Check if notification preferences are set
+        const hasNotificationPrefs = user?.notificationPreferences && 
+          (typeof user.notificationPreferences.email !== 'undefined' || 
+           typeof user.notificationPreferences.sms !== 'undefined' || 
+           typeof user.notificationPreferences.push !== 'undefined');
+        
+        // Check if onboarding is fully complete
+        const onboardingComplete = user?.onboardingComplete === true;
+        
+        // Redirect logic based on completion status
+        if (result.isNewUser || !hasBasicProfile) {
+          // Step 1: Basic Profile Setup
+          destination = '/onboarding';
+          logger.info('Redirecting to basic profile setup', { isNewUser: result.isNewUser, hasBasicProfile });
+        } else if (!hasLocation) {
+          // Step 2: Location Setup
+          destination = '/onboarding/location';
+          logger.info('Redirecting to location setup', { hasLocation });
+        } else if (!hasNotificationPrefs) {
+          // Step 3: Notification Preferences
+          destination = '/onboarding/notifications';
+          logger.info('Redirecting to notification preferences', { hasNotificationPrefs });
+        } else if (!onboardingComplete) {
+          // Step 4: Welcome Screen
+          destination = '/onboarding/welcome';
+          logger.info('Redirecting to welcome screen', { onboardingComplete });
+        } else {
+          // Step 5: Dashboard (or original redirect destination)
+          destination = redirectTo;
+          logger.info('Redirecting to dashboard', { destination });
+        }
         
         // Prevent multiple redirects - use requestIdleCallback for better performance
         if (!redirectingRef.current) {

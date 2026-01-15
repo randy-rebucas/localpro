@@ -31,8 +31,26 @@ export default function AuthenticatedLayout({
     name?: string;
     role?: string;
     phone?: string;
+    email?: string;
     firstName?: string;
     lastName?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+    notificationPreferences?: {
+      email?: boolean;
+      sms?: boolean;
+      push?: boolean;
+      marketing?: boolean;
+    };
+    profileComplete?: boolean;
+    locationComplete?: boolean;
+    notificationsComplete?: boolean;
+    onboardingComplete?: boolean;
     profileCompleteness?: {
       percentage: number;
       completedFields: number;
@@ -56,6 +74,7 @@ export default function AuthenticatedLayout({
   const fetchedUserIdRef = useRef<string | null>(null);
   const fetchInProgressRef = useRef(false);
   const preferredFeatureRedirectedRef = useRef(false);
+  const onboardingRedirectedRef = useRef(false);
 
   useEffect(() => {
     logger.debug('Authenticated Layout useEffect', { status, hasSession: !!session, hasApiToken: !!getApiToken() });
@@ -199,6 +218,79 @@ export default function AuthenticatedLayout({
     }
   }, [status, session?.user?.id, redirectToLogin, session, user]);
 
+  // Smart redirect logic: Check profile completion and redirect to appropriate onboarding step
+  useEffect(() => {
+    // Skip if still loading or not authenticated
+    if (loading || status !== "authenticated" || !session || !user) {
+      return;
+    }
+
+    // Skip if already on an onboarding route to prevent redirect loops
+    if (pathname?.startsWith('/onboarding')) {
+      logger.debug('Already on onboarding route, skipping redirect check', { pathname });
+      return;
+    }
+
+    // Skip if already redirected in this session
+    if (onboardingRedirectedRef.current) {
+      return;
+    }
+
+    // Check profile completion status
+    const hasBasicProfile = user.firstName && user.lastName && (user.phone || user.email);
+    const hasLocation = user.address && user.city && user.state && user.country;
+    const hasNotificationPrefs = user.notificationPreferences && 
+      (typeof user.notificationPreferences.email !== 'undefined' || 
+       typeof user.notificationPreferences.sms !== 'undefined' || 
+       typeof user.notificationPreferences.push !== 'undefined');
+    const onboardingComplete = user.onboardingComplete === true;
+
+    let redirectPath: string | null = null;
+
+    // Determine which step is incomplete and needs to be completed
+    if (!hasBasicProfile) {
+      redirectPath = '/onboarding';
+      logger.info('Missing basic profile, redirecting to onboarding', { 
+        userId: session.user?.id,
+        hasFirstName: !!user.firstName,
+        hasLastName: !!user.lastName,
+        hasContact: !!(user.phone || user.email)
+      });
+    } else if (!hasLocation) {
+      redirectPath = '/onboarding/location';
+      logger.info('Missing location, redirecting to location setup', { 
+        userId: session.user?.id,
+        hasAddress: !!user.address,
+        hasCity: !!user.city,
+        hasState: !!user.state,
+        hasCountry: !!user.country
+      });
+    } else if (!hasNotificationPrefs) {
+      redirectPath = '/onboarding/notifications';
+      logger.info('Missing notification preferences, redirecting to notifications setup', { 
+        userId: session.user?.id,
+        hasPrefs: !!user.notificationPreferences
+      });
+    } else if (!onboardingComplete) {
+      redirectPath = '/onboarding/welcome';
+      logger.info('Onboarding not marked complete, redirecting to welcome screen', { 
+        userId: session.user?.id,
+        onboardingComplete: user.onboardingComplete
+      });
+    }
+
+    // Perform redirect if needed
+    if (redirectPath) {
+      onboardingRedirectedRef.current = true;
+      logger.info('Redirecting to complete onboarding', { 
+        from: pathname, 
+        to: redirectPath,
+        userId: session.user?.id
+      });
+      router.push(redirectPath);
+    }
+  }, [status, session, loading, user, pathname, router]);
+
   // Redirect to preferred feature if selected and on home/dashboard
   useEffect(() => {
     // Only redirect if:
@@ -206,10 +298,12 @@ export default function AuthenticatedLayout({
     // 2. Has a preferred feature
     // 3. Is on home page (/) or dashboard
     // 4. Haven't redirected yet in this session
+    // 5. Onboarding is complete (don't interfere with onboarding flow)
     if (
       status === "authenticated" &&
       session &&
       !loading &&
+      user?.onboardingComplete &&
       preferredFeature &&
       !preferredFeatureRedirectedRef.current
     ) {
@@ -226,7 +320,7 @@ export default function AuthenticatedLayout({
         router.push(featureRoute);
       }
     }
-  }, [status, session, loading, preferredFeature, pathname, router]);
+  }, [status, session, loading, user?.onboardingComplete, preferredFeature, pathname, router]);
 
   // Check if we're on a full-page route that doesn't need the standard layout
   // Memoized to prevent unnecessary recalculations
