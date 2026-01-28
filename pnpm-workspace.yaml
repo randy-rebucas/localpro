@@ -1,0 +1,7 @@
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - '@tailwindcss/oxide'
+  - '@vercel/speed-insights'
+  - core-js
+  - sharp
+  - unrs-resolver

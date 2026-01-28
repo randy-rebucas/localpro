@@ -7,36 +7,6 @@
  */
 import { logger } from './logger';
 
-// Environment variable validation helpers
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getEnvVar(key: string, defaultValue?: string): string {
-  const value = process.env[key] || defaultValue;
-  if (!value) {
-    throw new Error(`Environment variable ${key} is required but not set`);
-  }
-  return value;
-}
-
-function getOptionalEnvVar(key: string, defaultValue?: string): string | undefined {
-  return process.env[key] || defaultValue;
-}
-
-function getBooleanEnvVar(key: string, defaultValue: boolean = false): boolean {
-  const value = process.env[key];
-  if (value === undefined) return defaultValue;
-  return value.toLowerCase() === 'true';
-}
-
-function getNumberEnvVar(key: string, defaultValue: number): number {
-  const value = process.env[key];
-  if (value === undefined) return defaultValue;
-  const parsed = parseInt(value, 10);
-  if (isNaN(parsed)) {
-    logger.warn(`Invalid number for ${key}`, { value, defaultValue });
-    return defaultValue;
-  }
-  return parsed;
-}
 
 // Helper to check if we're on the client side
 const isClient = typeof window !== 'undefined';
