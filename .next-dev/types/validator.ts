@@ -542,6 +542,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/(authenticated)/mpin/forgot/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/mpin/forgot">> = Specific
+  const handler = {} as typeof import("../../src/app/(authenticated)/mpin/forgot/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/(authenticated)/mpin/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/mpin">> = Specific
+  const handler = {} as typeof import("../../src/app/(authenticated)/mpin/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/(authenticated)/mpin/setup/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/mpin/setup">> = Specific
+  const handler = {} as typeof import("../../src/app/(authenticated)/mpin/setup/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/(authenticated)/notifications/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/notifications">> = Specific

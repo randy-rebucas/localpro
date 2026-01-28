@@ -17,6 +17,12 @@
       "static/chunks/_pages-dir-browser_node_modules_pnpm_next_15_5_9__babel_core_7_2_98c288acc78ec08ee29353e6f5a3-e25f82.js"
     ]
   },
+  "app\\(auth)\\auth\\page.tsx -> @/app/(authenticated)/mpin/page": {
+    "id": "app\\(auth)\\auth\\page.tsx -> @/app/(authenticated)/mpin/page",
+    "files": [
+      "static/chunks/_app-pages-browser_src_app_authenticated_mpin_page_tsx.js"
+    ]
+  },
   "components\\marketplace\\service-marketplace.tsx -> @/lib/api": {
     "id": "components\\marketplace\\service-marketplace.tsx -> @/lib/api",
     "files": []

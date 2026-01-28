@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
+import dynamic from "next/dynamic";
+const MPINPage = dynamic(() => import("@/app/(authenticated)/mpin/page"), { ssr: false });
 import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -140,11 +142,16 @@ function getErrorMessage(error: { code?: string; message?: string } | null | und
 }
 
 function SignInForm() {
+    // TODO: Replace with real userId detection logic
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') || '' : '';
+    // TODO: Replace with real MPIN check (e.g., API call or user profile field)
+    const hasMPIN = !!userId; // For demo, assume if userId exists, MPIN is set
+    type AuthMethodExtended = AuthMethod | "mpin";
+    const [authMethod, setAuthMethod] = useState<AuthMethodExtended>(hasMPIN ? "mpin" : "email");
   const router = useRouter();
   const searchParams = useSearchParams();
   
   // Auth method and steps
-  const [authMethod, setAuthMethod] = useState<AuthMethod>("email");
   const [phoneStep, setPhoneStep] = useState<PhoneStep>("phone");
   const [emailStep, setEmailStep] = useState<EmailStep>("email-check");
   
@@ -982,6 +989,20 @@ function SignInForm() {
           <Phone className="w-4 h-4" />
           <span>Phone</span>
         </button>
+        {hasMPIN && (
+          <button
+            type="button"
+            onClick={() => setAuthMethod("mpin")}
+            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+              authMethod === "mpin"
+                ? "bg-emerald-500 text-white shadow-lg"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>MPIN</span>
+          </button>
+        )}
       </div>
 
       {/* Header */}
@@ -998,6 +1019,17 @@ function SignInForm() {
       {errors.general && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4">
           <p className="text-sm text-destructive text-center">{errors.general}</p>
+        </div>
+      )}
+
+      {/* MPIN Authentication */}
+      {authMethod === "mpin" && hasMPIN && (
+        <div className="w-full max-w-md mx-auto p-6 bg-slate-900 rounded-2xl shadow-lg shadow-emerald-500/10 border border-slate-800 mt-12">
+          <div className="flex items-center justify-center mb-6">
+            <Shield className="w-8 h-8 text-emerald-400 mr-2" />
+            <h1 className="text-2xl font-bold text-white">Sign In with MPIN</h1>
+          </div>
+          <MPINPage userId={userId} />
         </div>
       )}
 
@@ -1102,7 +1134,9 @@ function SignInForm() {
                     type="button"
                     onClick={() => {
                       setPhoneStep("phone");
+                      setPhoneNumber("");
                       setPhoneCode("");
+                      phoneForm.reset();
                       codeForm.reset();
                       setErrors({});
                     }}
@@ -1307,23 +1341,14 @@ function SignInForm() {
                     />
                   </div>
                   <div>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        {...emailRegisterForm.register("password")}
-                        placeholder="Password (min 8 characters)"
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-base font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent pr-12"
-                        style={{ color: '#f1f5f9' }}
-                        autoComplete="new-password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
+                    <input
+                      type="password"
+                      {...emailRegisterForm.register("password")}
+                      placeholder="Password"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-base font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      style={{ color: '#f1f5f9' }}
+                      autoComplete="new-password"
+                    />
                     {emailRegisterForm.formState.errors.password && (
                       <p className="mt-2 text-sm text-destructive">{emailRegisterForm.formState.errors.password.message}</p>
                     )}
@@ -1337,7 +1362,7 @@ function SignInForm() {
                       setEmailStep("email-check");
                       setEmail("");
                       setEmailOtpCode("");
-                      emailLoginForm.reset();
+                      emailRegisterForm.reset();
                       setErrors({});
                     }}
                     className="flex-1 px-4 py-3 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-slate-600 transition-all duration-200"
@@ -1352,10 +1377,10 @@ function SignInForm() {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin mr-2 inline" />
-                        Creating...
+                        Registering...
                       </>
                     ) : (
-                      "Create Account"
+                      "Register"
                     )}
                   </button>
                 </div>
@@ -1370,7 +1395,6 @@ function SignInForm() {
               })}>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-slate-400 mb-2">Email: {email}</p>
                     <input
                       type="email"
                       {...emailSetupPasswordForm.register("email")}
@@ -1381,23 +1405,14 @@ function SignInForm() {
                     />
                   </div>
                   <div>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        {...emailSetupPasswordForm.register("password")}
-                        placeholder="Password (min 8 characters)"
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-base font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent pr-12"
-                        style={{ color: '#f1f5f9' }}
-                        autoComplete="new-password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      {...emailSetupPasswordForm.register("password")}
+                      placeholder="Password"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-base font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      style={{ color: '#f1f5f9' }}
+                      autoComplete="new-password"
+                    />
                     {emailSetupPasswordForm.formState.errors.password && (
                       <p className="mt-2 text-sm text-destructive">{emailSetupPasswordForm.formState.errors.password.message}</p>
                     )}
@@ -1549,6 +1564,7 @@ function SignInForm() {
       )}
     </div>
   );
+
 }
 
 export default function SignIn() {
@@ -1570,3 +1586,4 @@ export default function SignIn() {
     </Suspense>
   );
 }
+
