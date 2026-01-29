@@ -1,53 +1,61 @@
-This file gives concise, repository-specific guidance to an AI coding assistant working on LocalPro.
 
-Keep responses actionable and repository-aware. When creating or modifying code, prefer minimal, low-risk changes and mention which files you edited.
+# LocalPro AI Coding Agent Instructions
 
-Quick facts
-- Framework: Next.js 15 (app router), React 19, TypeScript.
-- Package manager: pnpm (package.json uses pnpm). Use scripts from `package.json` (dev/build/start/lint/analyze).
-- External API (canonical): https://localpro-super-app.onrender.com — many client fetches expect this; development may use http://localhost:5000.
+This guide provides essential, actionable knowledge for AI coding agents working on the LocalPro codebase. It is designed to maximize productivity and minimize risk by surfacing project-specific architecture, workflows, and conventions.
 
-Where to look first
-- High-level docs: `README.md` (root) — describes modules and API endpoints.
-- App entry/config: `next.config.ts` (CSP, image remotePatterns, Sentry integration).
-- Runtime middleware & auth: `src/middleware.ts` (auth rules, route protection, bearer vs session tokens).
-- Session handling: `src/lib/session.ts` (encrypt/decrypt sessions, session cookie helpers, in-memory session store).
-- Logging: `src/lib/logger.ts` (structured logger with Sentry integration; used across server and client).
+## Big Picture Architecture
+- **Frontend:** Next.js 15 (App Router), React 19, TypeScript-first, Tailwind CSS for styling.
+- **Backend:** All business logic and data are handled by an external REST API (`https://localpro-super-app.onrender.com`). The frontend acts as a client, with no direct DB access.
+- **API Integration:** All client/server components fetch data via REST endpoints. See `src/lib/api.ts` and `src/hooks/` for fetch/SWR patterns.
+- **Authentication:**
+	- Session cookie (encrypted JWT, see `src/lib/session.ts`) or `api-token` (JWT from external API).
+	- Route-level auth and role checks in `src/middleware.ts` (see patterns for Bearer vs session, and role-based access).
+- **Role-based Access:** Roles (admin, provider, supplier, instructor, etc.) are enforced in middleware and reflected in UI/feature docs.
+- **Logging:** Use `src/lib/logger.ts` for all logs (never use `console.*`). Logger integrates with Sentry and supports structured logs.
+- **Session Handling:** Use helpers from `src/lib/session.ts` for all session/cookie logic. Never hardcode cookie names.
+- **Types:** All new data shapes/types go in `src/types/` (or referenced feature folders).
 
-Architecture notes an AI should use
-- The app is primarily a Next.js frontend that calls an external REST API. The repo contains client-side server components and edge-aware code; prefer editing server-side files in `src/app` and `src/lib` for infra and utilities.
-- Authentication flow: either a session cookie (encrypted JWT from `src/lib/session.ts`) or an `api-token` (JWT issued by external API). `src/middleware.ts` implements route-level checks and differentiates routes that require Bearer tokens vs session cookies. Respect these checks when adding routes or API handlers.
-- Role-based access: middleware enforces role-based rules (provider/admin/supplier/instructor). Check `middleware.ts` before changing route names or permission logic.
+## Developer Workflows
+- **Install:** `pnpm install`
+- **Dev server:** `pnpm dev` (http://localhost:3000)
+- **Build:** `pnpm build`
+- **Start:** `pnpm start`
+- **Lint:** `pnpm lint` (auto-fix: `pnpm lint:fix`)
+- **Bundle analysis:** `pnpm analyze`
+- **E2E tests:** Playwright (`pnpm test:e2e`, see scripts in `package.json`)
+- **Environment:** Set secrets in `.env.local` (see `README.md` for required vars).
 
-Developer workflows & commands (explicit)
-- Install: `pnpm install`
-- Dev server: `pnpm dev` (runs `next dev`, listens on :3000)
-- Build: `pnpm build` (Next.js build)
-- Start production server: `pnpm start`
-- Lint: `pnpm lint` and auto-fix with `pnpm lint:fix`
-- Bundle analysis: `pnpm analyze` (runs `node scripts/analyze-bundle.js`)
+## Project Conventions & Patterns
+- **API Calls:** Use fetch wrappers in `src/lib/api.ts` and SWR hooks in `src/hooks/`. Always use `createAuthFetchOptions` for authenticated requests.
+- **SWR:** All server state is managed with SWR (see `src/lib/swr-config.ts`). Do not use TanStack Query.
+- **Session/Cookie:** Use `createSessionCookie`, `createApiTokenCookie`, `clearAllSessionCookies` from `src/lib/session.ts`.
+- **Logging:** Always use `logger.error/info/debug` from `src/lib/logger.ts`.
+- **Image Hosts:** If adding remote images, update `next.config.ts` (`images.remotePatterns`).
+- **Types:** Add/update types in `src/types/` (or feature-specific types). Many types are re-exported for backward compatibility.
+- **Feature Docs:** Each feature has a `features/<feature>/README.md` and related docs (API, data, usage, best practices).
+- **Marketplace UI:** Follows the layout in `features/PROVIDER_MARKETPLACE_LAYOUT.md` and `features/MARKETPLACE_FRONTEND_DOCUMENTATION.md`.
+- **Error Handling:** Use try/catch and log errors with `logger.error`. Show user-friendly messages in UI.
+- **Role/Route Checks:** Always check `src/middleware.ts` before changing route names or permission logic.
 
-Code patterns & conventions
-- Typescript-first: add/update types under `src/types` when introducing new data shapes.
-- API calls: client code uses the external REST API; check `src/lib/*` and `src/hooks` for SWR hooks and standardized fetch wrappers.
-- Sessions: use `src/lib/session.ts` helpers to create/clear cookies. Do not hardcode cookie names; use `createSessionCookie`, `createApiTokenCookie`, `clearAllSessionCookies`.
-- Logging: use `import { logger } from '@/lib/logger'` and prefer `logger.error/info/debug` instead of console.* to keep consistent structured logs and Sentry integration.
-- Images: `next.config.ts` restricts allowed image hosts. If adding image hosts, update `images.remotePatterns`.
+## Integration Points
+- **External API:** All business data and actions go through the canonical API. Never add direct DB or file storage logic.
+- **Sentry:** Error monitoring is configured in `next.config.ts` and `src/instrumentation.ts`.
+- **Environment:** All config is centralized in `src/lib/env.ts`.
 
-Testing & safety
-- There are no test scripts in package.json; when adding functionality, include minimal unit tests under the repo testing conventions and update `package.json` scripts if needed.
-- Sentry: configured via `next.config.ts` and `src/instrumentation.ts`. When touching error handling, keep Sentry capture calls in mind.
-
-When you edit files
+## When Editing Files
 - Keep changes minimal and explain the reason in the PR description.
-- Update `README.md` or relevant feature `README.md` under `features/` when you add/modify API surface or developer-visible behavior.
-- Run `pnpm lint` after edits and ensure no TypeScript errors.
+- Update `README.md` or relevant `features/*/README.md` if you add/modify API or developer-visible behavior.
+- Run `pnpm lint` and ensure no TypeScript errors after edits.
 
-Examples to reference in code reviews
-- Auth logic: `src/middleware.ts` — shows bearer vs session handling and route patterns.
-- Session crypto: `src/lib/session.ts` — encryption, cookie helpers, and in-memory session lifecycle.
-- Logger: `src/lib/logger.ts` — preferred structured logging for server and client.
+## Examples & References
+- **Auth logic:** `src/middleware.ts` (route/role checks)
+- **Session crypto:** `src/lib/session.ts` (encryption, cookie helpers)
+- **Logger:** `src/lib/logger.ts` (structured logging)
+- **API fetch:** `src/lib/api.ts`, `src/hooks/`
+- **Marketplace UI:** `features/PROVIDER_MARKETPLACE_LAYOUT.md`, `features/MARKETPLACE_FRONTEND_DOCUMENTATION.md`
 
-If anything in this file seems incomplete or you need repo-level context I couldn't infer, ask a human for: environment variable values (SESSION_SECRET), CI/Sentry credentials, and backend API contract changes.
+## If Anything Is Unclear
+- If you need context not in this file (e.g., environment variable values, CI/Sentry credentials, backend API contract changes), ask a human reviewer.
 
+---
 After making changes: ask the reviewer whether to add tests, update feature docs in `features/*/README.md`, or wire CI scripts.
