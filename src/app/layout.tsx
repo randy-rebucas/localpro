@@ -1,4 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { Shield } from "lucide-react";
+import { RegistrationForm } from "@/components/registration-form";
+// Set this flag to true to enable maintenance mode globally
+const MAINTENANCE_MODE = true;
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSettingsProvider } from "@/components/app-settings-provider";
@@ -213,6 +217,24 @@ export default function RootLayout({
                   - Manages user's active role view (client, provider, etc.) */}
               <RoleViewProvider>
                 <LiveChatProvider>
+                  {/* Maintenance overlay at root, above main content but below nav/header */}
+                  {MAINTENANCE_MODE && (
+                    <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950/95 backdrop-blur-xl">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 blur-2xl" />
+                      <div className="relative z-10 max-w-lg w-full mx-auto p-8 rounded-2xl bg-slate-900/90 border border-emerald-700/30 shadow-2xl flex flex-col items-center">
+                        <Shield className="w-14 h-14 text-emerald-400 mb-4" />
+                        <h1 className="text-3xl font-bold text-white mb-2 text-center">Scheduled Maintenance</h1>
+                        <p className="text-slate-300 mb-6 text-center">
+                          LocalPro is currently undergoing scheduled maintenance to bring you new features and improvements.<br />
+                          <span className="text-emerald-400 font-semibold">User registration for Service Providers and Clients is still open!</span>
+                        </p>
+                        <RegistrationForm />
+                        <div className="mt-8 text-slate-400 text-xs text-center">
+                          Thank you for your patience. We&apos;ll be back soon!<br />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {children}
                   <LiveChatWidget />
                 </LiveChatProvider>

@@ -1,4 +1,4 @@
-// File: C:\Users\corew\localpro\src\app\(authenticated)\marketplace\layout.tsx
+// File: C:\Users\corew\LOCALPRO DEVELOPMENT\localpro\src\app\(authenticated)\marketplace\layout.tsx
 import * as entry from '../../../../../src/app/(authenticated)/marketplace/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
