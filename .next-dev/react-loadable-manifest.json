@@ -5,6 +5,18 @@
       "static/chunks/_app-pages-browser_node_modules_pnpm_next_15_5_9__babel_core_7_2_43298daf416e20dafb0d3d14dae4-b43d61.js"
     ]
   },
+  "..\\node_modules\\.pnpm\\next@15.5.9_@babel+core@7.2_43298daf416e20dafb0d3d14dae451ed\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": "..\\node_modules\\.pnpm\\next@15.5.9_@babel+core@7.2_43298daf416e20dafb0d3d14dae451ed\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app",
+    "files": [
+      "static/chunks/_pages-dir-browser_node_modules_pnpm_next_15_5_9__babel_core_7_2_43298daf416e20dafb0d3d14dae4-876753.js"
+    ]
+  },
+  "..\\node_modules\\.pnpm\\next@15.5.9_@babel+core@7.2_43298daf416e20dafb0d3d14dae451ed\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": "..\\node_modules\\.pnpm\\next@15.5.9_@babel+core@7.2_43298daf416e20dafb0d3d14dae451ed\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error",
+    "files": [
+      "static/chunks/_pages-dir-browser_node_modules_pnpm_next_15_5_9__babel_core_7_2_43298daf416e20dafb0d3d14dae4-dd142d.js"
+    ]
+  },
   "components\\marketplace\\service-marketplace.tsx -> @/lib/api": {
     "id": "components\\marketplace\\service-marketplace.tsx -> @/lib/api",
     "files": []
